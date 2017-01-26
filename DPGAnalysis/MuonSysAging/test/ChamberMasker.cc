@@ -78,11 +78,14 @@ ChamberMasker::ChamberMasker(const edm::ParameterSet& iConfig)
 
 {  
    m_ineffCSC     = iConfig.getParameter<double>("CSCineff"); 
+   std::cout << "[ChamberMasker] CSC CFEB inefficiency set to : " << m_ineffCSC << std::endl;
+
+   std::cout << "[ChamberMasker] List of masked RPC rasIds: " << std::endl;
    m_ChamberRegEx = iConfig.getParameter<std::vector<std::string>>("chamberRegEx"); 
-   for ( auto rpc_ids : iConfig.getParameter<std::vector<int>>("maskedRPCIDs"))
+   for ( auto rpcId : iConfig.getParameter<std::vector<int>>("maskedRPCIDs"))
     {
-      m_maskedRPCIDs.push_back(rpc_ids);
-      std::cout << rpc_ids << std::endl;
+      std::cout << "[ChamberMasker] " << rpcId << std::endl;
+      m_maskedRPCIDs.push_back(rpcId);
     }
 
 }
@@ -151,8 +154,7 @@ ChamberMasker::createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom)
 
   const std::vector<const DTChamber*> chambers = dtGeom->chambers();
 
-  std::cout << chambers.size() << std::endl;
-
+  std::cout << "[ChamberMasker] List of aged DT chambers (ChamberID, efficiency)" << std::endl;
   for ( const DTChamber *ch : chambers)
    {
 
@@ -183,9 +185,15 @@ ChamberMasker::createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom)
 
        } 
 
-     m_DTChambEffs[chId.rawId()] = eff;
-
-     std::cout << chId << " " << eff << std::endl;
+     // Just populating the map with aged RawIds
+     // Not a bigh issue when masking chambers
+     // but reduces DB object size in case of 
+     // swicth to higher granularity
+     if (eff < 1.)
+       {
+	 std::cout << "[ChamberMasker] (" << chId << "," << eff << ")" << std::endl;
+	 m_DTChambEffs[chId.rawId()] = eff;
+       }
          
    }
   

@@ -81,7 +81,7 @@ private:
   // ----------member data ---------------------------
 
   edm::EDGetTokenT <DTDigiCollection> m_digiToken;
-  std::map<DTChamberId, float> m_ChEffs;  
+  std::map<unsigned int, float> m_ChEffs;  
   
 };
 
@@ -140,10 +140,10 @@ DTChamberMasker::produce(edm::Event& event, const edm::EventSetup& conditions)
       for (; dtLayerIdIt != dtLayerIdEnd; ++dtLayerIdIt)
 	{
 	  
-	  DTChamberId chId = ((*dtLayerIdIt).first).chamberId();
-	  auto chEffIt = m_ChEffs.find(chId);
+	  uint32_t rawId = ((*dtLayerIdIt).first).chamberId().rawId();
+	  auto chEffIt = m_ChEffs.find(rawId);
 
-	  if (chEffIt != m_ChEffs.end() && randGen.flat() <= chEffIt->second)
+	  if (chEffIt == m_ChEffs.end() || randGen.flat() <= chEffIt->second)
 	    filteredDigis->put((*dtLayerIdIt).second,(*dtLayerIdIt).first);
 	  
 	}
@@ -175,35 +175,10 @@ DTChamberMasker::beginRun(edm::Run const& run, edm::EventSetup const& iSetup)
 
   m_ChEffs.clear();
 
-  edm::ESHandle<DTGeometry> dtGeom;
-  iSetup.get<MuonGeometryRecord>().get(dtGeom);
-
   edm::ESHandle<MuonSystemAging> agingObj;
   iSetup.get<MuonSystemAgingRcd>().get(agingObj);
 
-  const auto chambers = dtGeom->chambers();
-
-  for ( const auto * ch : chambers)
-   {
-
-     DTChamberId  chId    = ch->id();
-     uint32_t     chRawId = chId.rawId();
-     
-     Float_t chamberEff = 1.;
-     for ( auto & agingPair : agingObj->m_DTChambEffs)
-       {
-
-	 if ( agingPair.first == chRawId)
-	   {
-	     chamberEff = agingPair.second;
-	     break;
-	   }
-
-       }
-
-     m_ChEffs[chId] = chamberEff;	 
-
-   }
+  m_ChEffs = agingObj->m_DTChambEffs;
 
 }
 
