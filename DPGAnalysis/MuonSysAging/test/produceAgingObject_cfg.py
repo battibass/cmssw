@@ -10,7 +10,7 @@ process.GlobalTag.globaltag = autoCond['run2_design']
 process.CondDB.connect = 'sqlite_file:MuonSystemAging.db'
 
 process.source = cms.Source("EmptyIOVSource",
-    lastValue = cms.uint64(999999999),
+    lastValue = cms.uint64(1),
     timetype = cms.string('runnumber'),
     firstValue = cms.uint64(1),
     interval = cms.uint64(1)
