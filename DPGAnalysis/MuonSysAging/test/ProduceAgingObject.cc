@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Class:      ChamberMasker
+// Class:      ProduceAgingObject
 // 
 //
 // Original Author:  Sunil Bansal
@@ -8,206 +8,278 @@
 //
 //
 
-
 // system include files
 #include <memory>
+#include <regex>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
 
+#include "FWCore/Framework/interface/Run.h"
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Framework/interface/IOVSyncValue.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+
+#include "Geometry/Records/interface/MuonGeometryRecord.h"
+#include "Geometry/DTGeometry/interface/DTGeometry.h"
+
 #include "CondFormats/MuonSystemAging/interface/MuonSystemAging.h"
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
+
 //
-// class declaration
+// Class declaration
 //
 
-// If the analyzer does not use TFileService, please remove
-// the template argument to the base class so the class inherits
-// from  edm::one::EDAnalyzer<> and also remove the line from
-// constructor "usesResource("TFileService");"
-// This will improve performance in multithreaded jobs.
+class ProduceAgingObject : public edm::one::EDAnalyzer<edm::one::WatchRuns>  
+{
 
-class ChamberMasker : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
-   public:
-      explicit ChamberMasker(const edm::ParameterSet&);
-      ~ChamberMasker();
+public:
+  explicit ProduceAgingObject(const edm::ParameterSet&);
+  ~ProduceAgingObject();
 
-      static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
 
-   private:
-      virtual void beginJob() override;
-      virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-      virtual void endJob() override;
-      std::vector<int> m_maskedRPCIDs;
-      std::vector<std::string> m_maskedDTIDs;
-      std::vector<int> m_maskedGE11PlusIDs;
-      std::vector<int> m_maskedGE11MinusIDs;
-      std::vector<int> m_maskedGE21PlusIDs;
-      std::vector<int> m_maskedGE21MinusIDs;
-      std::vector<int> m_maskedME0PlusIDs;
-      std::vector<int> m_maskedME0MinusIDs;
+private:
+
+  virtual void beginJob() override { };
+  virtual void beginRun(const edm::Run&, const edm::EventSetup&) override;
+  virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
+  virtual void endRun(const edm::Run&, const edm::EventSetup&) override { };
+  virtual void endJob() override { };
+
+  void createRpcAgingMap();
+  void createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom);
 
 
-      double m_ineffCSC;      
+  // -- member data --
 
-      // ----------member data ---------------------------
+  std::vector<std::string> m_RPCRegEx;
+  std::map<uint32_t, float> m_RPCChambEffs;
+
+  std::vector<std::string> m_DTRegEx;
+  std::map<uint32_t, float> m_DTChambEffs;
+
+  std::vector<int> m_maskedGE11PlusIDs;
+  std::vector<int> m_maskedGE11MinusIDs;
+  std::vector<int> m_maskedGE21PlusIDs;
+  std::vector<int> m_maskedGE21MinusIDs;
+  std::vector<int> m_maskedME0PlusIDs;
+  std::vector<int> m_maskedME0MinusIDs;
+  
+  // CB comment out, is this needed at all?
+  // double m_ineffCSC;      
+
 };
 
-//
-// constants, enums and typedefs
-//
 
 //
-// static data member definitions
+// Constructors and destructor
 //
 
-//
-// constructors and destructor
-//
-ChamberMasker::ChamberMasker(const edm::ParameterSet& iConfig)
+ProduceAgingObject::ProduceAgingObject(const edm::ParameterSet& iConfig)
 
 {  
-   m_ineffCSC = iConfig.getParameter<double>("CSCineff"); 
-   for ( auto rpc_ids : iConfig.getParameter<std::vector<int>>("maskedRPCIDs"))
-    {
-      m_maskedRPCIDs.push_back(rpc_ids);
-    }
 
-    for ( auto ge11plus_ids : iConfig.getParameter<std::vector<int>>("maskedGE11PlusIDs"))
+  // CB comment out, is this needed at all?
+  // m_ineffCSC = iConfig.getParameter<double>("CSCineff"); 
+
+  m_DTRegEx = iConfig.getParameter<std::vector<std::string>>("dtRegEx"); 
+  m_RPCRegEx = iConfig.getParameter<std::vector<std::string>>("rpcRegEx");   
+
+  for ( auto ge11plus_ids : iConfig.getParameter<std::vector<int>>("maskedGE11PlusIDs"))
     {
       m_maskedGE11PlusIDs.push_back(ge11plus_ids);
     }
-
-    for ( auto ge11minus_ids : iConfig.getParameter<std::vector<int>>("maskedGE11MinusIDs"))
+  
+  for ( auto ge11minus_ids : iConfig.getParameter<std::vector<int>>("maskedGE11MinusIDs"))
     {
       m_maskedGE11MinusIDs.push_back(ge11minus_ids);
     }
-
-
-   for ( auto ge21plus_ids : iConfig.getParameter<std::vector<int>>("maskedGE21PlusIDs"))
+  
+  for ( auto ge21plus_ids : iConfig.getParameter<std::vector<int>>("maskedGE21PlusIDs"))
     {
       m_maskedGE21PlusIDs.push_back(ge21plus_ids);
     }
-
-    for ( auto ge21minus_ids : iConfig.getParameter<std::vector<int>>("maskedGE21MinusIDs"))
+  
+  for ( auto ge21minus_ids : iConfig.getParameter<std::vector<int>>("maskedGE21MinusIDs"))
     {
       m_maskedGE21MinusIDs.push_back(ge21minus_ids);
     }
-
-
-    for ( auto me0plus_ids : iConfig.getParameter<std::vector<int>>("maskedME0PlusIDs"))
+  
+  for ( auto me0plus_ids : iConfig.getParameter<std::vector<int>>("maskedME0PlusIDs"))
     {
       m_maskedME0PlusIDs.push_back(me0plus_ids);
     }
-
-    for ( auto me0minus_ids : iConfig.getParameter<std::vector<int>>("maskedME0MinusIDs"))
+  
+  for ( auto me0minus_ids : iConfig.getParameter<std::vector<int>>("maskedME0MinusIDs"))
     {
       m_maskedME0MinusIDs.push_back(me0minus_ids);
     }
+  
+}
 
 
-    for ( auto regStr : iConfig.getParameter<std::vector<std::string>>("maskedChRegEx") )
+ProduceAgingObject::~ProduceAgingObject()
+{ 
+
+}
+
+
+//
+// Member Functions
+//
+
+// -- Called for each event --
+void
+ProduceAgingObject::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
+
+  MuonSystemAging* muonAgingObject = new MuonSystemAging();
+  
+  muonAgingObject->m_DTChambEffs  = m_DTChambEffs;
+  muonAgingObject->m_RPCChambEffs = m_RPCChambEffs;
+
+  for(unsigned int i = 0; i < m_maskedGE11PlusIDs.size();++i){
+    muonAgingObject->m_GE11Pluschambers.push_back(m_maskedGE11PlusIDs.at(i));
+  }
+  
+  for(unsigned int i = 0; i < m_maskedGE11MinusIDs.size();++i){
+    muonAgingObject->m_GE11Minuschambers.push_back(m_maskedGE11MinusIDs.at(i));
+  }
+  
+  for(unsigned int i = 0; i < m_maskedGE21PlusIDs.size();++i){
+    muonAgingObject->m_GE21Pluschambers.push_back(m_maskedGE21PlusIDs.at(i));
+  }
+  
+  for(unsigned int i = 0; i < m_maskedGE21MinusIDs.size();++i){
+    muonAgingObject->m_GE21Minuschambers.push_back(m_maskedGE21MinusIDs.at(i));
+  }
+  
+  for(unsigned int i = 0; i < m_maskedME0PlusIDs.size();++i){
+    muonAgingObject->m_ME0Pluschambers.push_back(m_maskedME0PlusIDs.at(i));
+  }
+  
+  for(unsigned int i = 0; i < m_maskedME0MinusIDs.size();++i){
+    muonAgingObject->m_ME0Minuschambers.push_back(m_maskedME0MinusIDs.at(i));
+  }
+  
+  // CB comment out, is this needed at all?
+  // muonAgingObject->m_CSCineff = m_ineffCSC; 
+
+  edm::Service<cond::service::PoolDBOutputService> poolDbService;
+  if( poolDbService.isAvailable() ) 
+    poolDbService->writeOne( muonAgingObject, 
+			     poolDbService->currentTime(),
+			     "MuonSystemAgingRcd" );
+  
+}
+
+// -- Called at the beginning of each run --
+void
+ProduceAgingObject::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup)
+{
+
+  edm::ESHandle<DTGeometry> dtGeom;
+  iSetup.get<MuonGeometryRecord>().get(dtGeom);
+
+  createDtAgingMap(dtGeom);
+  createRpcAgingMap();
+  
+}
+
+/// -- Create RPC aging map --
+void
+ProduceAgingObject::createRpcAgingMap()
+{
+ 
+  std::cout << "[ProduceAgingObject] List of aged RPC objects (ID, efficiency)" 
+	    << std::endl;
+  for (auto & chRegExStr : m_RPCRegEx )
     {
-    m_maskedDTIDs.push_back(regStr);
 
+      std::string id = chRegExStr.substr(0, chRegExStr.find(":"));
+      std::string eff = chRegExStr.substr(id.size()+1, chRegExStr.find(":"));
+
+      std::cout << "\t(" << id << "," << eff << ")" << std::endl;
+      m_RPCChambEffs[std::atoi(id.c_str())] = std::atof(eff.c_str());
+      
     }
-
-
-   //now do what ever initialization is needed
-   usesResource("TFileService");
-
+  
 }
 
-
-ChamberMasker::~ChamberMasker()
-{
- 
-   // do anything here that needs to be done at desctruction time
-   // (e.g. close files, deallocate resources etc.)
-
-}
-
-
-//
-// member functions
-//
-
-// ------------ method called for each event  ------------
+/// -- Create DT aging map ------------
 void
-ChamberMasker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+ProduceAgingObject::createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom)
 {
-   using namespace edm;
 
- MuonSystemAging* pList = new MuonSystemAging();
- for(unsigned int i = 0; i < m_maskedRPCIDs.size();++i){
- pList->m_RPCchambers.push_back(m_maskedRPCIDs.at(i));
- }
- for(unsigned int i = 0; i < m_maskedDTIDs.size();++i){
- pList->m_DTchambers.push_back(std::string(m_maskedDTIDs.at(i)));
- }
+  const std::vector<const DTChamber*> chambers = dtGeom->chambers();
 
-for(unsigned int i = 0; i < m_maskedGE11PlusIDs.size();++i){
- pList->m_GE11Pluschambers.push_back(m_maskedGE11PlusIDs.at(i));
- }
+  std::cout << "[ProduceAgingObject] List of aged DT chambers (ChamberID, efficiency)" 
+	    << std::endl;
+  for ( const DTChamber *ch : chambers)
+   {
 
-for(unsigned int i = 0; i < m_maskedGE11MinusIDs.size();++i){
- pList->m_GE11Minuschambers.push_back(m_maskedGE11MinusIDs.at(i));
- }
+     DTChamberId chId = ch->id();
 
-for(unsigned int i = 0; i < m_maskedGE21PlusIDs.size();++i){
- pList->m_GE21Pluschambers.push_back(m_maskedGE21PlusIDs.at(i));
- }
+     std::string chTag = "WH" + std::to_string(chId.wheel())
+                       + "_ST" + std::to_string(chId.station())
+                       + "_SEC" + std::to_string(chId.sector());
 
-for(unsigned int i = 0; i < m_maskedGE21MinusIDs.size();++i){
- pList->m_GE21Minuschambers.push_back(m_maskedGE21MinusIDs.at(i));
- }
+     float eff = 1.;
 
-for(unsigned int i = 0; i < m_maskedME0PlusIDs.size();++i){
- pList->m_ME0Pluschambers.push_back(m_maskedME0PlusIDs.at(i));
- }
+     for (auto & chRegExStr : m_DTRegEx)
+       {
 
-for(unsigned int i = 0; i < m_maskedME0MinusIDs.size();++i){
- pList->m_ME0Minuschambers.push_back(m_maskedME0MinusIDs.at(i));
- }
+	 std::string effTag(chRegExStr.substr(chRegExStr.find(":")));
 
+	 const std::regex chRegEx(chRegExStr.substr(0,chRegExStr.find(":")));
+	 const std::regex effRegEx("(\\d*\\.\\d*)");
 
+	 std::smatch effMatch;
 
- 
- pList->m_CSCineff = m_ineffCSC; 
- edm::Service<cond::service::PoolDBOutputService> poolDbService;
- if( poolDbService.isAvailable() ) poolDbService->writeOne( pList, poolDbService->currentTime(),"MuonSystemAgingRcd" );
+	 if ( std::regex_search(chTag, chRegEx) &&
+	      std::regex_search(effTag, effMatch, effRegEx))
+	   {
+	     std::string effStr = effMatch.str();
+	     eff = std::atof(effStr.c_str());
+	   }
 
+       } 
+
+     if (eff < 1.)
+       {
+	 std::cout << "\t(" << chId << "," << eff << ")" << std::endl;
+	 m_DTChambEffs[chId.rawId()] = eff;
+       }
+         
+   }
+  
 }
 
-
-// ------------ method called once each job just before starting event loop  ------------
-void 
-ChamberMasker::beginJob()
-{
-}
-
-// ------------ method called once each job just after ending the event loop  ------------
-void 
-ChamberMasker::endJob() 
-{
-}
-
-// ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
+/// -- Fill 'descriptions' with the allowed parameters for the module  --
 void
-ChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
+ProduceAgingObject::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
+{
+
   edm::ParameterSetDescription desc;
-  desc.setUnknown();
+  desc.add<std::vector<std::string> >("dtRegEx",    { } );
+  desc.add<std::vector<std::string> >("rpcRegEx",   { } );
+  desc.add<std::vector<int> >("maskedGE11PlusIDs",  { } );
+  desc.add<std::vector<int> >("maskedGE11MinusIDs", { } );
+  desc.add<std::vector<int> >("maskedGE21PlusIDs",  { } );
+  desc.add<std::vector<int> >("maskedGE21MinusIDs", { } );
+  desc.add<std::vector<int> >("maskedME0PlusIDs",   { } );
+  desc.add<std::vector<int> >("maskedME0MinusIDs",  { } );
+
   descriptions.addDefault(desc);
+
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(ChamberMasker);
+DEFINE_FWK_MODULE(ProduceAgingObject);
