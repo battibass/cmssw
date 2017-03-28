@@ -27,6 +27,7 @@
 
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "Geometry/DTGeometry/interface/DTGeometry.h"
+#include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 
 #include "CondFormats/MuonSystemAging/interface/MuonSystemAging.h"
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
@@ -55,6 +56,7 @@ private:
 
   void createRpcAgingMap();
   void createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom);
+  void createCscAgingMap(edm::ESHandle<CSCGeometry> & cscGeom);
 
 
   // -- member data --
@@ -64,6 +66,9 @@ private:
 
   std::vector<std::string> m_DTRegEx;
   std::map<uint32_t, float> m_DTChambEffs;
+
+  std::vector<std::string> m_CSCRegEx;
+  std::map<uint32_t, std::pair<uint32_t, float>> m_CSCChambEffs;
 
   std::vector<int> m_maskedGE11PlusIDs;
   std::vector<int> m_maskedGE11MinusIDs;
@@ -89,8 +94,9 @@ ProduceAgingObject::ProduceAgingObject(const edm::ParameterSet& iConfig)
   // CB comment out, is this needed at all?
   // m_ineffCSC = iConfig.getParameter<double>("CSCineff"); 
 
-  m_DTRegEx = iConfig.getParameter<std::vector<std::string>>("dtRegEx"); 
+  m_DTRegEx  = iConfig.getParameter<std::vector<std::string>>("dtRegEx"); 
   m_RPCRegEx = iConfig.getParameter<std::vector<std::string>>("rpcRegEx");   
+  m_CSCRegEx = iConfig.getParameter<std::vector<std::string>>("cscRegEx");   
 
   for ( auto ge11plus_ids : iConfig.getParameter<std::vector<int>>("maskedGE11PlusIDs"))
     {
@@ -144,6 +150,7 @@ ProduceAgingObject::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   
   muonAgingObject->m_DTChambEffs  = m_DTChambEffs;
   muonAgingObject->m_RPCChambEffs = m_RPCChambEffs;
+  muonAgingObject->m_CSCChambEffs = m_CSCChambEffs;
 
   for(unsigned int i = 0; i < m_maskedGE11PlusIDs.size();++i){
     muonAgingObject->m_GE11Pluschambers.push_back(m_maskedGE11PlusIDs.at(i));
@@ -188,7 +195,11 @@ ProduceAgingObject::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup
   edm::ESHandle<DTGeometry> dtGeom;
   iSetup.get<MuonGeometryRecord>().get(dtGeom);
 
+  edm::ESHandle<CSCGeometry> cscGeom;
+  iSetup.get<MuonGeometryRecord>().get(cscGeom);
+
   createDtAgingMap(dtGeom);
+  createCscAgingMap(cscGeom);
   createRpcAgingMap();
   
 }
@@ -262,6 +273,64 @@ ProduceAgingObject::createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom)
   
 }
 
+/// -- Create CSC aging map ------------
+void
+ProduceAgingObject::createCscAgingMap(edm::ESHandle<CSCGeometry> & cscGeom)
+{
+
+  const auto chambers = cscGeom->chambers();
+
+  std::cout << "[ProduceAgingObject] List of aged CSC chambers (ChamberID, efficiency, type)" 
+	    << std::endl;
+
+  for ( const auto *ch : chambers) {
+    
+    CSCDetId chId = ch->id();
+    
+    
+    std::string chTag = (chId.zendcap() == 1 ? "ME+" : "ME-")
+      + std::to_string(chId.station())
+      + "/" + std::to_string(chId.ring())
+      + "/" + std::to_string(chId.chamber());
+    
+    int type = 0;
+    float eff = 1.;
+
+    for (auto & chRegExStr : m_CSCRegEx) {
+      
+      int loc = chRegExStr.find(":");
+      // if there's no :, then we don't have to correct format
+      if (loc < 0) continue;
+
+      std::string effTag(chRegExStr.substr(loc));
+
+      const std::regex chRegEx(chRegExStr.substr(0,chRegExStr.find(":")));
+      const std::regex predicateRegEx("(\\d*,\\d*\\.\\d*)");
+
+      std::smatch predicate;
+
+      if ( std::regex_search(chTag, chRegEx) && std::regex_search(effTag, predicate, predicateRegEx)) {
+	std::string predicateStr = predicate.str();
+	std::string typeStr = predicateStr.substr(0,predicateStr.find(","));
+	std::string effStr = predicateStr.substr(predicateStr.find(",")+1);
+	type = std::atoi(typeStr.c_str());
+	eff = std::atof(effStr.c_str());
+	
+	std::cout << "\t(" << chTag << "," << eff << "," << type << ")" << std::endl;
+      }
+
+    } 
+
+    // Note, layer 0 for chamber specification
+    int rawId = chId.rawIdMaker(chId.endcap(), chId.station(), chId.ring(), chId.chamber(), 0);
+    m_CSCChambEffs[rawId] = std::make_pair(type, eff);
+    
+  }
+
+}
+
+
+
 /// -- Fill 'descriptions' with the allowed parameters for the module  --
 void
 ProduceAgingObject::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
@@ -270,6 +339,7 @@ ProduceAgingObject::fillDescriptions(edm::ConfigurationDescriptions& description
   edm::ParameterSetDescription desc;
   desc.add<std::vector<std::string> >("dtRegEx",    { } );
   desc.add<std::vector<std::string> >("rpcRegEx",   { } );
+  desc.add<std::vector<std::string> >("cscRegEx",   { } );
   desc.add<std::vector<int> >("maskedGE11PlusIDs",  { } );
   desc.add<std::vector<int> >("maskedGE11MinusIDs", { } );
   desc.add<std::vector<int> >("maskedGE21PlusIDs",  { } );
