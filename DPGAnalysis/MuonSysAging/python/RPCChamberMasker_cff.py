@@ -22,7 +22,7 @@ def appendRPCChamberMaskerBeforeRecHits(process):
         process.rpcRecHits = process.rpcRecHits.clone()
         process.rpcAgedDigis = RPCChamberMasker.clone()
         process.rpcRecHits.rpcDigiLabel = cms.InputTag('rpcAgedDigis')
-        process.filteredRPCDigiSequence = cms.Sequence(process.rpcAgedDigis \ 
+        process.filteredRPCDigiSequence = cms.Sequence(process.rpcAgedDigis \
                                                        + process.rpcRecHits)
         process.reconstruction_step.replace(process.rpcRecHits, \
                                             process.filteredRPCDigiSequence)
