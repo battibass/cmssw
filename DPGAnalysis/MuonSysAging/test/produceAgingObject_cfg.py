@@ -26,8 +26,6 @@ process.PoolDBOutputService = cms.Service("PoolDBOutputService",
 )
 
 process.produceAgingObject = cms.EDAnalyzer("ProduceAgingObject",
-           # CB what to do with this
-           # CSCineff = cms.double(0.15), 
 
             maskedGE11MinusIDs = cms.vint32([
             671105280,671121664,671105792,671122176,671106304,671122688,671106816,

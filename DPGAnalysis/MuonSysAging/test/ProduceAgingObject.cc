@@ -76,9 +76,6 @@ private:
   std::vector<int> m_maskedGE21MinusIDs;
   std::vector<int> m_maskedME0PlusIDs;
   std::vector<int> m_maskedME0MinusIDs;
-  
-  // CB comment out, is this needed at all?
-  // double m_ineffCSC;      
 
 };
 
@@ -90,9 +87,6 @@ private:
 ProduceAgingObject::ProduceAgingObject(const edm::ParameterSet& iConfig)
 
 {  
-
-  // CB comment out, is this needed at all?
-  // m_ineffCSC = iConfig.getParameter<double>("CSCineff"); 
 
   m_DTRegEx  = iConfig.getParameter<std::vector<std::string>>("dtRegEx"); 
   m_RPCRegEx = iConfig.getParameter<std::vector<std::string>>("rpcRegEx");   
@@ -176,9 +170,6 @@ ProduceAgingObject::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     muonAgingObject->m_ME0Minuschambers.push_back(m_maskedME0MinusIDs.at(i));
   }
   
-  // CB comment out, is this needed at all?
-  // muonAgingObject->m_CSCineff = m_ineffCSC; 
-
   edm::Service<cond::service::PoolDBOutputService> poolDbService;
   if( poolDbService.isAvailable() ) 
     poolDbService->writeOne( muonAgingObject, 
