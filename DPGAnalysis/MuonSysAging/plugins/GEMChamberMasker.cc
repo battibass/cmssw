@@ -114,8 +114,6 @@ GEMChamberMasker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 	{
 	  auto chambId = (*gemLayerIdIt).first.chamberId();
 
-	  bool (!bool keepDigi
-		 continue;
 	  bool keepDigi = (!GE11Minus_  && chambId.station()==1 && chambId.region()<0 ) ||
 		          (!GE11Plus_   && chambId.station()==1 && chambId.region()>0 ) ||
 		          (!GE21Minus_  && chambId.station()==2 && chambId.region()<0 ) ||
