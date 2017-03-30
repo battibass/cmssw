@@ -17,15 +17,21 @@ def appendRPCChamberMaskerAtReco(process):
 # no packin/unpacking is available for RE3/1 RE4/1
 # must start from sim digis  
 def appendRPCChamberMaskerBeforeRecHits(process):
+
     if hasattr(process,'rpcRecHits') :
-        print "[appendChamberMasker] : Found rpcRecHits, applying filter"
+
+        print "[appendRPCChamberMasker] : Found rpcRecHits, applying filter"
+
         process.rpcRecHits = process.rpcRecHits.clone()
         process.rpcAgedDigis = RPCChamberMasker.clone()
         process.rpcRecHits.rpcDigiLabel = cms.InputTag('rpcAgedDigis')
-        process.filteredRPCDigiSequence = cms.Sequence(process.rpcAgedDigis \
+
+        process.filteredRpcDigiSequence = cms.Sequence(process.rpcAgedDigis \
                                                        + process.rpcRecHits)
+
         process.reconstruction_step.replace(process.rpcRecHits, \
-                                            process.filteredRPCDigiSequence)
+                                            process.filteredRpcDigiSequence)
+
         if hasattr(process,"RandomNumberGeneratorService") :
             process.RandomNumberGeneratorService.rpcAgedDigis = cms.PSet(
                 initialSeed = cms.untracked.uint32(789342)
@@ -45,7 +51,7 @@ def appendRPCChamberMaskerAtUnpacking(process):
 
     if hasattr(process,'muonRPCDigis') :
 
-        print "[appendChamberMasker] : Found muonRPCDigis, applying filter"
+        print "[appendRPCChamberMasker] : Found muonRPCDigis, applying filter"
 
         process.preRPCDigis = process.muonRPCDigis.clone()
         process.muonRPCDigis = RPCChamberMasker.clone()

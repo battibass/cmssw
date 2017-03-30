@@ -55,9 +55,10 @@ private:
   virtual void endJob() override { };
 
   void createRpcAgingMap();
-  void createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom);
-  void createCscAgingMap(edm::ESHandle<CSCGeometry> & cscGeom);
-
+  void createDtAgingMap(const edm::ESHandle<DTGeometry> & dtGeom);
+  void createCscAgingMap(const edm::ESHandle<CSCGeometry> & cscGeom);
+  void printAgingMap(const std::map<uint32_t,float> & map, 
+		     const std::string & type) const;
 
   // -- member data --
 
@@ -70,12 +71,8 @@ private:
   std::vector<std::string> m_CSCRegEx;
   std::map<uint32_t, std::pair<uint32_t, float>> m_CSCChambEffs;
 
-  std::vector<int> m_maskedGE11PlusIDs;
-  std::vector<int> m_maskedGE11MinusIDs;
-  std::vector<int> m_maskedGE21PlusIDs;
-  std::vector<int> m_maskedGE21MinusIDs;
-  std::vector<int> m_maskedME0PlusIDs;
-  std::vector<int> m_maskedME0MinusIDs;
+  std::map<uint32_t, float> m_GEMChambEffs;
+  std::map<uint32_t, float> m_ME0ChambEffs;
 
 };
 
@@ -92,36 +89,16 @@ ProduceAgingObject::ProduceAgingObject(const edm::ParameterSet& iConfig)
   m_RPCRegEx = iConfig.getParameter<std::vector<std::string>>("rpcRegEx");   
   m_CSCRegEx = iConfig.getParameter<std::vector<std::string>>("cscRegEx");   
 
-  for ( auto ge11plus_ids : iConfig.getParameter<std::vector<int>>("maskedGE11PlusIDs"))
+  for ( auto gemId : iConfig.getParameter<std::vector<int>>("maskedGEMIDs"))
     {
-      m_maskedGE11PlusIDs.push_back(ge11plus_ids);
+      m_GEMChambEffs[gemId] = 0.;
     }
-  
-  for ( auto ge11minus_ids : iConfig.getParameter<std::vector<int>>("maskedGE11MinusIDs"))
+
+  for ( auto gemId : iConfig.getParameter<std::vector<int>>("maskedME0IDs"))
     {
-      m_maskedGE11MinusIDs.push_back(ge11minus_ids);
+      m_ME0ChambEffs[gemId] = 0.;
     }
-  
-  for ( auto ge21plus_ids : iConfig.getParameter<std::vector<int>>("maskedGE21PlusIDs"))
-    {
-      m_maskedGE21PlusIDs.push_back(ge21plus_ids);
-    }
-  
-  for ( auto ge21minus_ids : iConfig.getParameter<std::vector<int>>("maskedGE21MinusIDs"))
-    {
-      m_maskedGE21MinusIDs.push_back(ge21minus_ids);
-    }
-  
-  for ( auto me0plus_ids : iConfig.getParameter<std::vector<int>>("maskedME0PlusIDs"))
-    {
-      m_maskedME0PlusIDs.push_back(me0plus_ids);
-    }
-  
-  for ( auto me0minus_ids : iConfig.getParameter<std::vector<int>>("maskedME0MinusIDs"))
-    {
-      m_maskedME0MinusIDs.push_back(me0minus_ids);
-    }
-  
+
 }
 
 
@@ -146,30 +123,9 @@ ProduceAgingObject::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   muonAgingObject->m_RPCChambEffs = m_RPCChambEffs;
   muonAgingObject->m_CSCChambEffs = m_CSCChambEffs;
 
-  for(unsigned int i = 0; i < m_maskedGE11PlusIDs.size();++i){
-    muonAgingObject->m_GE11Pluschambers.push_back(m_maskedGE11PlusIDs.at(i));
-  }
-  
-  for(unsigned int i = 0; i < m_maskedGE11MinusIDs.size();++i){
-    muonAgingObject->m_GE11Minuschambers.push_back(m_maskedGE11MinusIDs.at(i));
-  }
-  
-  for(unsigned int i = 0; i < m_maskedGE21PlusIDs.size();++i){
-    muonAgingObject->m_GE21Pluschambers.push_back(m_maskedGE21PlusIDs.at(i));
-  }
-  
-  for(unsigned int i = 0; i < m_maskedGE21MinusIDs.size();++i){
-    muonAgingObject->m_GE21Minuschambers.push_back(m_maskedGE21MinusIDs.at(i));
-  }
-  
-  for(unsigned int i = 0; i < m_maskedME0PlusIDs.size();++i){
-    muonAgingObject->m_ME0Pluschambers.push_back(m_maskedME0PlusIDs.at(i));
-  }
-  
-  for(unsigned int i = 0; i < m_maskedME0MinusIDs.size();++i){
-    muonAgingObject->m_ME0Minuschambers.push_back(m_maskedME0MinusIDs.at(i));
-  }
-  
+  muonAgingObject->m_GEMChambEffs = m_GEMChambEffs;
+  muonAgingObject->m_ME0ChambEffs = m_ME0ChambEffs;
+
   edm::Service<cond::service::PoolDBOutputService> poolDbService;
   if( poolDbService.isAvailable() ) 
     poolDbService->writeOne( muonAgingObject, 
@@ -192,6 +148,9 @@ ProduceAgingObject::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup
   createDtAgingMap(dtGeom);
   createCscAgingMap(cscGeom);
   createRpcAgingMap();
+
+  printAgingMap(m_GEMChambEffs,"GEM");
+  printAgingMap(m_ME0ChambEffs,"ME0");
   
 }
 
@@ -208,7 +167,7 @@ ProduceAgingObject::createRpcAgingMap()
       std::string id = chRegExStr.substr(0, chRegExStr.find(":"));
       std::string eff = chRegExStr.substr(id.size()+1, chRegExStr.find(":"));
 
-      std::cout << "\t(" << id << "," << eff << ")" << std::endl;
+      std::cout << "\t( " << id << " , " << eff << " )" << std::endl;
       m_RPCChambEffs[std::atoi(id.c_str())] = std::atof(eff.c_str());
       
     }
@@ -217,7 +176,7 @@ ProduceAgingObject::createRpcAgingMap()
 
 /// -- Create DT aging map ------------
 void
-ProduceAgingObject::createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom)
+ProduceAgingObject::createDtAgingMap(const edm::ESHandle<DTGeometry> & dtGeom)
 {
 
   const std::vector<const DTChamber*> chambers = dtGeom->chambers();
@@ -256,7 +215,7 @@ ProduceAgingObject::createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom)
 
      if (eff < 1.)
        {
-	 std::cout << "\t(" << chId << "," << eff << ")" << std::endl;
+	 std::cout << "\t(" << chId << ", " << eff << " )" << std::endl;
 	 m_DTChambEffs[chId.rawId()] = eff;
        }
          
@@ -266,7 +225,7 @@ ProduceAgingObject::createDtAgingMap(edm::ESHandle<DTGeometry> & dtGeom)
 
 /// -- Create CSC aging map ------------
 void
-ProduceAgingObject::createCscAgingMap(edm::ESHandle<CSCGeometry> & cscGeom)
+ProduceAgingObject::createCscAgingMap(const edm::ESHandle<CSCGeometry> & cscGeom)
 {
 
   const auto chambers = cscGeom->chambers();
@@ -307,7 +266,7 @@ ProduceAgingObject::createCscAgingMap(edm::ESHandle<CSCGeometry> & cscGeom)
 	type = std::atoi(typeStr.c_str());
 	eff = std::atof(effStr.c_str());
 	
-	std::cout << "\t(" << chTag << "," << eff << "," << type << ")" << std::endl;
+	std::cout << "\t( " << chTag << " , " << eff << " , " << type << " )" << std::endl;
       }
 
     } 
@@ -319,6 +278,27 @@ ProduceAgingObject::createCscAgingMap(edm::ESHandle<CSCGeometry> & cscGeom)
   }
 
 }
+void
+ProduceAgingObject::printAgingMap(const std::map<uint32_t,float> & map, 
+				  const std::string & type) const
+{
+ 
+  std::cout << "[ProduceAgingObject] List of aged " 
+	    << type << " objects (ID, efficiency)" 
+	    << std::endl;
+
+  
+  std::map<uint32_t,float>::const_iterator mapObj = map.begin();
+  std::map<uint32_t,float>::const_iterator mapEnd = map.end();
+
+ for ( ; mapObj != mapEnd; ++mapObj)
+   {
+     std::cout << "\t( " << mapObj->first 
+	       << " , " << mapObj->second << " )" << std::endl;
+   }
+
+}
+
 
 
 
@@ -331,12 +311,8 @@ ProduceAgingObject::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add<std::vector<std::string> >("dtRegEx",    { } );
   desc.add<std::vector<std::string> >("rpcRegEx",   { } );
   desc.add<std::vector<std::string> >("cscRegEx",   { } );
-  desc.add<std::vector<int> >("maskedGE11PlusIDs",  { } );
-  desc.add<std::vector<int> >("maskedGE11MinusIDs", { } );
-  desc.add<std::vector<int> >("maskedGE21PlusIDs",  { } );
-  desc.add<std::vector<int> >("maskedGE21MinusIDs", { } );
-  desc.add<std::vector<int> >("maskedME0PlusIDs",   { } );
-  desc.add<std::vector<int> >("maskedME0MinusIDs",  { } );
+  desc.add<std::vector<int> >("maskedGEMIDs", { } );
+  desc.add<std::vector<int> >("maskedME0IDs", { } );
 
   descriptions.addDefault(desc);
 

@@ -32,12 +32,8 @@ class MuonSystemAging
   std::map<unsigned int, float>  m_DTChambEffs;
   std::map<unsigned int, std::pair<unsigned int, float> >  m_CSCChambEffs;
 
-  std::vector<int>  m_GE11Pluschambers;
-  std::vector<int>  m_GE11Minuschambers; 
-  std::vector<int>  m_GE21Pluschambers;
-  std::vector<int>  m_GE21Minuschambers;
-  std::vector<int>  m_ME0Pluschambers;
-  std::vector<int>  m_ME0Minuschambers;
+  std::map<unsigned int, float>  m_GEMChambEffs;
+  std::map<unsigned int, float>  m_ME0ChambEffs;
   
   COND_SERIALIZABLE;
 

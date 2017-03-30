@@ -13,8 +13,8 @@ def appendDTChamberMaskerAtUnpacking(process):
 
         process.muonDTDigis.digiTag = cms.InputTag('preDtDigis') 
 
-        process.filteredDigiSequence = cms.Sequence(process.preDtDigis + process.muonDTDigis)
-        process.RawToDigi.replace(process.muonDTDigis, process.filteredDigiSequence)
+        process.filteredDtDigiSequence = cms.Sequence(process.preDtDigis + process.muonDTDigis)
+        process.RawToDigi.replace(process.muonDTDigis, process.filteredDtDigiSequence)
 
         if hasattr(process,"RandomNumberGeneratorService") :
             process.RandomNumberGeneratorService.muonDTDigis = cms.PSet(

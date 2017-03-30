@@ -91,10 +91,6 @@ private:
 
 
 //
-// static data member definitions
-//
-//vector<L1MuRegionalCand>
-//
 // constructors and destructor
 //
 DTChamberMasker::DTChamberMasker(const edm::ParameterSet& iConfig) :
@@ -108,12 +104,8 @@ DTChamberMasker::DTChamberMasker(const edm::ParameterSet& iConfig) :
 
 DTChamberMasker::~DTChamberMasker()
 {
- 
-   // do anything here that needs to be done at desctruction time
-   // (e.g. close files, deallocate resources etc.)
 
 }
-
 
 //
 // member functions
