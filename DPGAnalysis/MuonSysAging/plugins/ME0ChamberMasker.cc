@@ -110,11 +110,11 @@ ME0ChamberMasker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 	  auto chambId = (*me0LayerIdIt).first.chamberId();
 
-	  if (!ME0Minus_  && chambId.region() < 0 ) continue;
-	  if (!ME0Plus_   && chambId.region() > 0 ) continue;
+	  bool keepDigi = (!ME0Minus_  && chambId.region() < 0 ) || 
+	                  (!ME0Plus_   && chambId.region() > 0 ) ;
 	  
 	  uint32_t rawId = chambId.rawId();
-	  if(m_maskedME0IDs.find(rawId) != m_maskedME0IDs.end())
+	  if(keepDigi || m_maskedME0IDs.find(rawId) != m_maskedME0IDs.end())
 	    {
 	      filteredDigis->put((*me0LayerIdIt).second,(*me0LayerIdIt).first);
 	    }
