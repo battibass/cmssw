@@ -16,6 +16,9 @@ def appendDTChamberMaskerAtUnpacking(process):
         process.filteredDtDigiSequence = cms.Sequence(process.preDtDigis + process.muonDTDigis)
         process.RawToDigi.replace(process.muonDTDigis, process.filteredDtDigiSequence)
 
+        if hasattr(process,"dtTriggerEfficiencyMonitor") :
+            process.dtTriggerEfficiencyMonitor.inputTagDDU = 'preDtDigis'
+
         if hasattr(process,"RandomNumberGeneratorService") :
             process.RandomNumberGeneratorService.muonDTDigis = cms.PSet(
                 initialSeed = cms.untracked.uint32(789342)
