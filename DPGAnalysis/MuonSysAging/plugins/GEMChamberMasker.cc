@@ -30,6 +30,7 @@
 
 class GEMChamberMasker : public edm::EDProducer 
 {
+
    public:
       explicit GEMChamberMasker(const edm::ParameterSet&);
       ~GEMChamberMasker();
@@ -172,10 +173,13 @@ void
 GEMChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
 {
 
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
-  desc.setUnknown();
+  desc.add<edm::InputTag>("digiTag", edm::InputTag("simMuonGEMDigis"));
+  desc.add<bool>("GE11Minus", true);
+  desc.add<bool>("GE11Plus",  true);
+  desc.add<bool>("GE21Minus", true);
+  desc.add<bool>("GE21Plus",  true);
+
   descriptions.addDefault(desc);
 
 }

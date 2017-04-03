@@ -33,6 +33,7 @@
 
 class ME0ChamberMasker : public edm::EDProducer 
 {
+
    public:
       explicit ME0ChamberMasker(const edm::ParameterSet&);
       ~ME0ChamberMasker();
@@ -145,6 +146,7 @@ ME0ChamberMasker::endJob()
 void
 ME0ChamberMasker::beginRun(edm::Run const& run, edm::EventSetup const& iSetup)
 {
+
   edm::ESHandle<MuonSystemAging> agingObj;
   iSetup.get<MuonSystemAgingRcd>().get(agingObj);
 
@@ -168,10 +170,10 @@ void
 ME0ChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
 {
 
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
-  desc.setUnknown();
+  desc.add<edm::InputTag>("digiTag", edm::InputTag("simMuonME0Digis"));
+  desc.add<bool>("ME0Minus", true);
+  desc.add<bool>("ME0Plus",  true);
   descriptions.addDefault(desc);
 
 }

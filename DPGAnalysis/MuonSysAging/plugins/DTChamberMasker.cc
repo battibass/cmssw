@@ -1,14 +1,12 @@
 // -*- C++ -*-
 //
-// Package:    L1Trigger/DTChamberMasker
+// Package:    DPGAnalysis/MuonSysAging
 // Class:      DTChamberMasker
 // 
-/**\class DTChamberMasker DTChamberMasker.cc L1Trigger/DTChamberMasker/plugins/DTChamberMasker.cc
+/**\class DTChamberMasker DTChamberMasker.cc DPGAnalysis/MuonSysAging/plugins/DTChamberMasker.cc
 
- Description: Class to mask DT digis or trigger segments on a chamber by chamber basis
+ Description: Class to mask DT digis on a chamber by chamber basis
 
- Implementation:
-     [Notes on implementation]
 */
 //
 // Original Author:  Carlo Battilana
@@ -62,11 +60,13 @@
 // class declaration
 //
 
-class DTChamberMasker : public edm::EDProducer {
+class DTChamberMasker : public edm::EDProducer 
+{
+
 public:
   explicit DTChamberMasker(const edm::ParameterSet&);
   ~DTChamberMasker();
-
+  
   static void fillDescriptions(edm::ConfigurationDescriptions&);
 
 private:
@@ -88,7 +88,6 @@ private:
 //
 // constants, enums and typedefs
 //
-
 
 //
 // constructors and destructor
@@ -177,13 +176,13 @@ DTChamberMasker::beginRun(edm::Run const& run, edm::EventSetup const& iSetup)
   
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-DTChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
+DTChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
+{
+
   edm::ParameterSetDescription desc;
-  desc.setUnknown();
   desc.add<edm::InputTag>("digiTag", edm::InputTag("simMuonDTDigis"));
   descriptions.addDefault(desc);
+
 }
 
 //define this as a plug-in

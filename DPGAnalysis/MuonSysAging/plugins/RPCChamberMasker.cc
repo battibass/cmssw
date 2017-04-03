@@ -1,14 +1,15 @@
 // -*- C++ -*-
 //
-// Package:    L1Trigger/L1IntegratedMuonTrigger/RPCChamberMasker
+// Package:    DPGAnalysis/MuonSysAging/
 // Class:      RPCChamberMasker
 // 
-/**\class RPCChamberMasker RPCChamberMasker.cc L1Trigger/L1IntegratedMuonTrigger/RPCChamberMasker/plugins/RPCChamberMasker.cc
+/**\class RPCChamberMasker RPCChamberMasker.cc DPGAnalysis/MuonSysAging/plugins/RPCChamberMasker.cc
 
- Description: [one line class summary]
+ Description:
 
  Implementation:
-     [Notes on implementation]
+     Class to mask RPC digis on a for single DetIds
+
 */
 //
 // Original Author:  Borislav Pavlov
@@ -49,7 +50,9 @@
 // class declaration
 //
 
-class RPCChamberMasker : public edm::EDProducer {
+class RPCChamberMasker : public edm::EDProducer 
+{
+
    public:
       explicit RPCChamberMasker(const edm::ParameterSet&);
       ~RPCChamberMasker();
@@ -70,12 +73,12 @@ class RPCChamberMasker : public edm::EDProducer {
   std::map<RPCDetId, float> m_ChEffs;
   bool theRE31_off;
   bool theRE41_off; 
+
 };
 
 //
 // constants, enums and typedefs
 //
-
 
 //
 // static data member definitions
@@ -87,19 +90,18 @@ class RPCChamberMasker : public edm::EDProducer {
 RPCChamberMasker::RPCChamberMasker(const edm::ParameterSet& iConfig) : 
   digiTag_(iConfig.getParameter<edm::InputTag>("digiTag") )
 {
+
   m_digiTag = consumes<RPCDigiCollection>(digiTag_);
   produces<RPCDigiCollection>();
 
   theRE31_off = iConfig.getParameter<bool>("descopeRE31");
   theRE41_off =iConfig.getParameter<bool>("descopeRE41");
+
 }
 
 
 RPCChamberMasker::~RPCChamberMasker()
 {
- 
-   // do anything here that needs to be done at desctruction time
-   // (e.g. close files, deallocate resources etc.)
 
 }
 
@@ -112,6 +114,7 @@ RPCChamberMasker::~RPCChamberMasker()
 void
 RPCChamberMasker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+
   using namespace edm;
   edm::Service<edm::RandomNumberGenerator> randGenService;
   CLHEP::HepRandomEngine& randGen = randGenService->getEngine(iEvent.streamID());
@@ -135,6 +138,7 @@ RPCChamberMasker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 	}
     }
   iEvent.put(std::move(filteredDigis));
+
 }
 
 // ------------ method called once each job just before starting event loop  ------------
@@ -146,7 +150,9 @@ RPCChamberMasker::beginJob()
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
-RPCChamberMasker::endJob() {
+RPCChamberMasker::endJob() 
+{
+
 }
 
 // ------------ method called when starting to processes a run  ------------
@@ -154,6 +160,7 @@ RPCChamberMasker::endJob() {
 void
 RPCChamberMasker::beginRun(edm::Run const& run, edm::EventSetup const& iSetup)
 {
+
   m_ChEffs.clear();
   
   edm::ESHandle<RPCGeometry> rpcGeom;
@@ -188,6 +195,7 @@ RPCChamberMasker::beginRun(edm::Run const& run, edm::EventSetup const& iSetup)
 	}
       m_ChEffs[rollId] = chamberEff;
     }
+
 }
 
  
@@ -196,16 +204,20 @@ RPCChamberMasker::beginRun(edm::Run const& run, edm::EventSetup const& iSetup)
 void
 RPCChamberMasker::endRun(edm::Run const&, edm::EventSetup const&)
 {
+
 }
  
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-RPCChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
+RPCChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
+{
+
   edm::ParameterSetDescription desc;
-  desc.setUnknown();
+  desc.add<edm::InputTag>("digiTag", edm::InputTag("simMuonRPCDigis"));
+  desc.add<bool>("descopeRE31", false);
+  desc.add<bool>("descopeRE41", false);
   descriptions.addDefault(desc);
+
 }
 
 //define this as a plug-in
