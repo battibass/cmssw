@@ -29,8 +29,8 @@ def appendRPCChamberMaskerBeforeRecHits(process):
         process.filteredRpcDigiSequence = cms.Sequence(process.rpcAgedDigis \
                                                        + process.rpcRecHits)
 
-        process.reconstruction_step.replace(process.rpcRecHits, \
-                                            process.filteredRpcDigiSequence)
+        process.reconstruction.replace(process.rpcRecHits, \
+                                       process.filteredRpcDigiSequence)
 
         if hasattr(process,"RandomNumberGeneratorService") :
             process.RandomNumberGeneratorService.rpcAgedDigis = cms.PSet(
