@@ -121,7 +121,7 @@ GEMChamberMasker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 		          (!GE21Plus_   && chambId.station()==2 && chambId.region()>0 ) ;
 
           uint32_t rawId = chambId.rawId();
-          if(keepDigi ||m_maskedGEMIDs.find(rawId) != m_maskedGEMIDs.end())
+          if(keepDigi || m_maskedGEMIDs.find(rawId) == m_maskedGEMIDs.end())
 	    {
               filteredDigis->put((*gemLayerIdIt).second,(*gemLayerIdIt).first);
 	    }

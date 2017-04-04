@@ -115,7 +115,7 @@ ME0ChamberMasker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 	                  (!ME0Plus_   && chambId.region() > 0 ) ;
 	  
 	  uint32_t rawId = chambId.rawId();
-	  if(keepDigi || m_maskedME0IDs.find(rawId) != m_maskedME0IDs.end())
+	  if(keepDigi || m_maskedME0IDs.find(rawId) == m_maskedME0IDs.end())
 	    {
 	      filteredDigis->put((*me0LayerIdIt).second,(*me0LayerIdIt).first);
 	    }
