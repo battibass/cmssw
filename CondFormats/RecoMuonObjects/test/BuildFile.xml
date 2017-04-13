@@ -1,4 +1,4 @@
-<library file="*.cc" name="CondFormatsRecoMuonObjectsTest"">
+<library file="*.cc" name="CondFormatsRecoMuonObjectsTest">
   <use name="CondFormats/RecoMuonObjects"/>
   <use name="CondFormats/MuonSystemAging"/>
   <use name="CondCore/DBOutputService"/>
