@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    DPGAnalysis/MuonSysAging
+// Package:    RecoLocalMuon/MuonSysAging
 // Class:      DTChamberMasker
 // 
-/**\class DTChamberMasker DTChamberMasker.cc DPGAnalysis/MuonSysAging/plugins/DTChamberMasker.cc
+/**\class DTChamberMasker DTChamberMasker.cc RecoLocalMuon/MuonSysAging/plugins/DTChamberMasker.cc
 
  Description: Class to mask DT digis on a chamber by chamber basis
 

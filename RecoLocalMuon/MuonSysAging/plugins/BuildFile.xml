@@ -1,5 +1,5 @@
 
-<library file="*.cc" name="DPGAnalysisMuonSysAgingPlugins"> 
+<library file="*.cc" name="RecoLocalMuonMuonSysAgingPlugins"> 
   <use name="FWCore/ServiceRegistry"/>
   <use name="CommonTools/UtilAlgos"/>
   <use name="DataFormats/HepMCCandidate"/>

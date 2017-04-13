@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    DPGAnalysis/MuonSysAging/
+// Package:    RecoLocalMuon/MuonSysAging/
 // Class:      RPCChamberMasker
 // 
-/**\class RPCChamberMasker RPCChamberMasker.cc DPGAnalysis/MuonSysAging/plugins/RPCChamberMasker.cc
+/**\class RPCChamberMasker RPCChamberMasker.cc RecoLocalMuon/MuonSysAging/plugins/RPCChamberMasker.cc
 
  Description:
 
