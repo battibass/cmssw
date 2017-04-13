@@ -1,4 +1,4 @@
-<library file="*.cc" name="DPGAnalysisMuonSysAgingTest">
+<library file="*.cc" name="CondFormatsMuonSystemAgingTest">
    <use name="CondFormats/MuonSystemAging"/>
    <use name="CondCore/DBOutputService"/>
    <use name="FWCore/MessageLogger"/>
