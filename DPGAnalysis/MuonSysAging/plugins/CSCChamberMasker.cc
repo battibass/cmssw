@@ -54,7 +54,7 @@
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
 #include "DataFormats/MuonDetId/interface/CSCIndexer.h"
 
-#include "CondFormats/MuonSystemAging/interface/MuonSystemAging.h"
+#include "CondFormats/RecoMuonObjects/interface/MuonSystemAging.h"
 #include "CondFormats/DataRecord/interface/MuonSystemAgingRcd.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"

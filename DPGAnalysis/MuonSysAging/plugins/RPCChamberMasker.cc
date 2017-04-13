@@ -38,7 +38,7 @@
 
 #include "DataFormats/RPCDigi/interface/RPCDigiCollection.h"
 #include "DataFormats/MuonDetId/interface/RPCDetId.h"
-#include "CondFormats/MuonSystemAging/interface/MuonSystemAging.h"
+#include "CondFormats/RecoMuonObjects/interface/MuonSystemAging.h"
 #include "CondFormats/DataRecord/interface/MuonSystemAgingRcd.h"
 #include "Geometry/RPCGeometry/interface/RPCGeometry.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"

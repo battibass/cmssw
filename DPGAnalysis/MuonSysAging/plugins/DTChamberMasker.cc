@@ -48,7 +48,7 @@
 #include "DataFormats/MuonDetId/interface/DTLayerId.h"
 #include "DataFormats/MuonDetId/interface/DTWireId.h"
 
-#include "CondFormats/MuonSystemAging/interface/MuonSystemAging.h"
+#include "CondFormats/RecoMuonObjects/interface/MuonSystemAging.h"
 #include "CondFormats/DataRecord/interface/MuonSystemAgingRcd.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
