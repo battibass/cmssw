@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    RecoLocalMuon/MuonSysAging/
+// Package:    SimMuon/RPCDigitizer/
 // Class:      RPCChamberMasker
 // 
-/**\class RPCChamberMasker RPCChamberMasker.cc RecoLocalMuon/MuonSysAging/plugins/RPCChamberMasker.cc
+/**\class RPCChamberMasker RPCChamberMasker.cc SimMuon/RPCDigitizer/plugins/RPCChamberMasker.cc
 
  Description:
 
@@ -197,7 +197,7 @@ RPCChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   desc.add<edm::InputTag>("digiTag", edm::InputTag("simMuonRPCDigis"));
   desc.add<bool>("descopeRE31", false);
   desc.add<bool>("descopeRE41", false);
-  descriptions.addDefault(desc);
+  descriptions.add("rpcChamberMasker",desc);
 
 }
 
