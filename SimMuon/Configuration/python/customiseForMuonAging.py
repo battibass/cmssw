@@ -21,6 +21,9 @@ def enableAgingAtReco(process):
     appendDTChamberMaskerAtUnpacking(process) 
     appendRPCChamberMaskerBeforeRecHits(process)
     appendGEMChamberMaskerAtReco(process)    
-    appendME0ChamberMaskerAtReco(process)    
+    appendME0ChamberMaskerAtReco(process)
+
+    if hasattr(process,"FEVTDEBUGHLToutput") :
+        process.FEVTDEBUGHLToutput.outputCommands.append('keep *MuonDigi*_*_*_RECO')
 
     return process
