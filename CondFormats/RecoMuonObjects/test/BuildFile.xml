@@ -1,9 +1,11 @@
 <library file="*.cc" name="CondFormatsRecoMuonObjectsTest">
   <use name="CondFormats/RecoMuonObjects"/>
+  <use name="CondFormats/DataRecord"/>
   <use name="CondCore/DBOutputService"/>
   <use name="FWCore/MessageLogger"/>
   <use name="Geometry/DTGeometry"/>
   <use name="Geometry/CSCGeometry"/>
+  <use name="Geometry/RPCGeometry"/>
   <use name="Geometry/Records"/>
   <flags EDM_PLUGIN="1"/>
 </library>

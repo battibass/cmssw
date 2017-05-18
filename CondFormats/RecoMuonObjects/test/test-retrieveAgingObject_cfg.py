@@ -1,20 +1,20 @@
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process("TEST")
-process.PoolDBESSource = cms.ESSource("PoolDBESSource",
-    DBParameters = cms.PSet(
-        messageLevel = cms.untracked.int32(0),
-        authenticationPath = cms.untracked.string('.')
-    ),
-    toGet = cms.VPSet(cms.PSet(
+process = cms.Process("PRINT")
+process.load('Configuration.StandardSequences.GeometryDB_cff')
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+
+from Configuration.AlCa.autoCond import autoCond
+process.GlobalTag.globaltag = autoCond['run2_design']
+
+process.GlobalTag.toGet = cms.VPSet( cms.PSet(
         record = cms.string('MuonSystemAgingRcd'),
-        tag = cms.string('MuonSystemAging_test')
-    )),
-    connect = cms.string('sqlite_file:MuonSystemAging.db')
-)
+        tag = cms.string('MuonSystemAging_Phase2-3000fbm1_v1_mc'),
+        connect = cms.string('frontier://FrontierProd/CMS_CONDITIONS')
+        ))
 
 process.source = cms.Source("EmptyIOVSource",
-    lastValue = cms.uint64(3),
+    lastValue = cms.uint64(1),
     timetype = cms.string('runnumber'),
     firstValue = cms.uint64(1),
     interval = cms.uint64(1)
@@ -28,4 +28,6 @@ process.get = cms.EDAnalyzer("EventSetupRecordDataGetter",
     verbose = cms.untracked.bool(True)
 )
 
-process.p = cms.Path(process.get)
+process.printAgingObject = cms.EDAnalyzer("PrintAgingObject")
+
+process.p = cms.Path(process.get + process.printAgingObject)
