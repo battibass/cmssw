@@ -1,0 +1,9 @@
+{
+   "destinationDatabase": "oracle://cms_orcon_prod/CMS_CONDITIONS",
+   "destinationTags": {
+       "MuonSystemAging_Phase2-3000fbm1_v1_mc": {}
+   },
+   "inputTag": "MuonSystemAging_3000fbm1",
+   "since": 1,
+   "userText": "Muon system aging/failures for CSC/DT/RPC for TDR studies referring to 3000 fb^-1 integrated luminosity"
+}
