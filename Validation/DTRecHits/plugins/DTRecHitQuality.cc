@@ -48,11 +48,11 @@ DTRecHitQuality::DTRecHitQuality(const ParameterSet& pset) {
   segment4DLabel_ = pset.getUntrackedParameter<InputTag>("segment4DLabel");
   segment4DToken_ = consumes<DTRecSegment4DCollection>(pset.getUntrackedParameter<InputTag>("segment4DLabel"));
   // Switches for analysis at various steps
-  doStep1_ = pset.getUntrackedParameter<bool>("doStep1_", false);
-  doStep2_ = pset.getUntrackedParameter<bool>("doStep2_", false);
-  doStep3_ = pset.getUntrackedParameter<bool>("doStep3_", false);
-  doall_ = pset.getUntrackedParameter<bool>("doall_", false);
-  local_ = pset.getUntrackedParameter<bool>("local_", true);
+  doStep1_ = pset.getUntrackedParameter<bool>("doStep1", false);
+  doStep2_ = pset.getUntrackedParameter<bool>("doStep2", false);
+  doStep3_ = pset.getUntrackedParameter<bool>("doStep3", false);
+  doall_ = pset.getUntrackedParameter<bool>("doall", false);
+  local_ = pset.getUntrackedParameter<bool>("local", true);
 }
 
 void DTRecHitQuality::bookHistograms(DQMStore::ConcurrentBooker & booker, edm::Run const& run, edm::EventSetup const& setup, Histograms & histograms) const {
