@@ -12,24 +12,22 @@ DT2DSegmentClients::DT2DSegmentClients(edm::ParameterSet const& config)
 {
 }
 
-void DT2DSegmentClients::endLuminosityBlock(edm::LuminosityBlock const& lumi,
-  edm::EventSetup const& setup)
+DT2DSegmentClients::~DT2DSegmentClients()
 {
-  DQMStore* dbe = Service<DQMStore>().operator->();
-  MonitorElement * hResPos    = dbe->get("DT/2DSegments/Res/2D_SuperPhi_hResPos");
-  MonitorElement * hResAngle  = dbe->get("DT/2DSegments/Res/2D_SuperPhi_hResAngle");
-  MonitorElement * hPullPos   = dbe->get("DT/2DSegments/Pull/2D_SuperPhi_hPullPos");
-  MonitorElement * hPullAngle = dbe->get("DT/2DSegments/Pull/2D_SuperPhi_hPullAngle");
+}
+
+void DT2DSegmentClients::dqmEndJob(DQMStore::IBooker & booker, DQMStore::IGetter & getter)
+{
+  MonitorElement * hResPos    = getter.get("DT/2DSegments/Res/2D_SuperPhi_hResPos");
+  MonitorElement * hResAngle  = getter.get("DT/2DSegments/Res/2D_SuperPhi_hResAngle");
+  MonitorElement * hPullPos   = getter.get("DT/2DSegments/Pull/2D_SuperPhi_hPullPos");
+  MonitorElement * hPullAngle = getter.get("DT/2DSegments/Pull/2D_SuperPhi_hPullAngle");
 
   Tutils util;
   util.drawGFit(hResPos->getTH1(), -0.1, 0.1, -0.1, 0.1);
   util.drawGFit(hResAngle->getTH1(), -0.1, 0.1, -0.1, 0.1);
   util.drawGFit(hPullPos->getTH1(), -5, 5, -5, 5);
   util.drawGFit(hPullAngle->getTH1(), -5, 5, -5, 5);
-}
-
-void DT2DSegmentClients::analyze(Event const& event, EventSetup const& setup)
-{
 }
 
 // declare this as a framework plugin
