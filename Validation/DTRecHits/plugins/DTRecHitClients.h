@@ -24,6 +24,16 @@ public:
 protected:
   /// End Job
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
+
+private:
+
+  // Switches for analysis at various steps
+  bool doStep1_;
+  bool doStep2_;
+  bool doStep3_;
+  bool local_;
+  bool doall_;
+
 };
 
 #endif // Validation_DTRecHits_DTRecHitClients_h

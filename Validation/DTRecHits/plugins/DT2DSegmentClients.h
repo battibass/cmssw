@@ -13,6 +13,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 class DT2DSegmentClients: public DQMEDHarvester {
+
 public: 
   /// Constructor
   DT2DSegmentClients(const edm::ParameterSet& ps);
@@ -23,6 +24,9 @@ public:
 protected:
   /// End Job
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
+
+private:
+  bool doSLPhi_;
 
 };
 

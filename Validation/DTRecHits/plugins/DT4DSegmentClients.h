@@ -13,6 +13,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 class DT4DSegmentClients: public DQMEDHarvester {
+
 public:
 
   /// Constructor
@@ -22,6 +23,11 @@ public:
 
   /// End Job
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
+
+private:
+
+  bool doall_;
+
 };
 
 #endif // Validation_DTRecHits_DT4DSegmentClients_h

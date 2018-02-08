@@ -7,12 +7,14 @@
 #include "Validation/DTRecHits/interface/utils.h"
 
 #include "DT4DSegmentClients.h"
+#include "Histograms.h"
 
 using namespace std;
 using namespace edm;
 
-DT4DSegmentClients::DT4DSegmentClients(edm::ParameterSet const& config)
+DT4DSegmentClients::DT4DSegmentClients(edm::ParameterSet const& pset)
 {
+  doall_ = pset.getUntrackedParameter<bool>("doall", false);
 }
 
 DT4DSegmentClients::~DT4DSegmentClients()
@@ -134,6 +136,14 @@ void DT4DSegmentClients::dqmEndJob(DQMStore::IBooker & booker, DQMStore::IGetter
   util.drawGFit(hPullY_W2->getTH1(),-0.2,0.2,-0.1,0.1);
   util.drawGFit(hPullBetaRZ_W2->getTH1(),-0.2,0.2,-0.1,0.1);
   util.drawGFit(hPullYRZ_W2->getTH1(),-0.2,0.2,-0.1,0.1);
+
+  if (doall_) {
+    HEff4DHitHarvest hEff_S3RPhi("All", booker, getter);  
+    HEff4DHitHarvest hEff_S3RZ_W0("W0", booker, getter); 
+    HEff4DHitHarvest hEff_S3RZ_W1("W1", booker, getter); 
+    HEff4DHitHarvest hEff_S3RZ_W2("W2", booker, getter); 
+  }
+
 }
 
 // declare this as a framework plugin
