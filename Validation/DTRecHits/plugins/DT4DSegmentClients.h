@@ -15,17 +15,16 @@
 class DT4DSegmentClients: public DQMEDHarvester {
 
 public:
-
   /// Constructor
   DT4DSegmentClients(const edm::ParameterSet& ps);
   /// Destructor
   virtual ~DT4DSegmentClients();
 
+protected:
   /// End Job
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
 
 private:
-
   bool doall_;
 
 };

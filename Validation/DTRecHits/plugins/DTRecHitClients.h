@@ -26,7 +26,6 @@ protected:
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
 
 private:
-
   // Switches for analysis at various steps
   bool doStep1_;
   bool doStep2_;

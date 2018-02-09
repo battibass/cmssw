@@ -18,29 +18,6 @@
 #include "DQMServices/Core/interface/MonitorElement.h"
 
 //---------------------------------------------------------------------------------------
-/// Function to fill an efficiency histograms with binomial errors //CB remove this
-/* inline */
-/* TH1F* divide(const TH1F * numerator, const TH1F * denominator, std::string const& name, std::string const& title) */
-/* { */
-/*   auto* ratio = static_cast<TH1F *>(numerator->Clone()); */
-/*   ratio->SetName(name.c_str()); */
-/*   ratio->SetTitle(title.c_str()); */
-/*   ratio->Divide(denominator); */
-/*   // Set the error accordingly to binomial statistics */
-/*   int bins = ratio->GetNbinsX(); */
-/*   for (int bin = 1; bin <= bins; ++bin) { */
-/*     float den = denominator->GetBinContent(bin); */
-/*     float eff = ratio->GetBinContent(bin); */
-/*     float err = 0; */
-/*     if (den != 0) { */
-/*       err = sqrt(eff*(1-eff)/den); */
-/*     } */
-/*     ratio->SetBinError(bin, err); */
-/*   } */
-/*   return ratio; */
-/* } */
-
-//---------------------------------------------------------------------------------------
 /// Function to fill an efficiency histograms with binomial errors
 inline
 void divide(MonitorElement* eff, const MonitorElement * numerator, const MonitorElement * denominator)
@@ -152,6 +129,7 @@ class HRes1DHit {
 };
 
 //---------------------------------------------------------------------------------------
+/// A set of histograms fo efficiency computation for 1D RecHits (producer)
 class HEff1DHit {
   public:
     HEff1DHit(const std::string& name, DQMStore::ConcurrentBooker & booker) {
@@ -194,7 +172,8 @@ class HEff1DHit {
     std::string name_;
 };
 
-//---------------------------------------------------------------//
+//---------------------------------------------------------------------------------------
+/// A set of histograms fo efficiency computation for 1D RecHits (harvesting)
 class HEff1DHitHarvest {
  public:
     HEff1DHitHarvest(const std::string & name, 
@@ -226,8 +205,7 @@ class HEff1DHitHarvest {
     std::string name_;
 };
 
-//---------------------------------------------------------------//
-
+//---------------------------------------------------------------------------------------
 // Histos of residuals for 2D rechits
 class HRes2DHit {
   public:
@@ -308,9 +286,8 @@ class HRes2DHit {
     bool doall_;
 };
 
-//--------------------------------------------------------------------------------//
-
-// Histos for 2D RecHit efficiency
+//---------------------------------------------------------------------------------------
+// Histos for 2D RecHit efficiency (producer)
 class HEff2DHit {
   public:
     HEff2DHit(const std::string& name, DQMStore::ConcurrentBooker & booker) {
@@ -361,6 +338,7 @@ class HEff2DHit {
 };
 
 //---------------------------------------------------------------------------------------
+// Histos for 2D RecHit efficiency (harvesting)
 class HEff2DHitHarvest {
  public:
     HEff2DHitHarvest(const std::string & name, 
@@ -522,7 +500,6 @@ class HRes4DHit {
       hResY = booker.book1D(pre + "_hResY", "4D RecHit residual on position (y) in chamber;y_{rec}-y_{sim} (cm)", 150, -0.6, 0.6);
 
       // histo in rz SL reference frame.
-
       hResBetaRZ = booker.book1D(pre + "_hResBetaRZ",
             "4D RecHit residual on beta direction in RZ SL;#alpha^{y}_{rec}-#alpha^{y}_{sim} (rad)",
             200, -0.1, 0.1);
@@ -635,6 +612,7 @@ class HRes4DHit {
         hResXVsResY.fill(resY, resX);
         hResAlphaVsResX.fill(resX, resAlpha);
         hResAlphaVsResY.fill(resY, resAlpha);
+
         // RZ SuperLayer
         hRecBetaRZ.fill(recBetaRZ);
         hSimBetaRZ.fill(simBetaRZ);
@@ -716,7 +694,7 @@ class HRes4DHit {
 };
 
 //---------------------------------------------------------------------------------------
-/// A set of histograms for efficiency 4D RecHits
+/// A set of histograms for efficiency 4D RecHits (producer)
 class HEff4DHit {
   public:
     HEff4DHit(const std::string& name, DQMStore::ConcurrentBooker & booker) {
@@ -793,6 +771,7 @@ class HEff4DHit {
 };
 
 //---------------------------------------------------------------------------------------
+/// A set of histograms for efficiency 4D RecHits (harvesting)
 class HEff4DHitHarvest {
  public:
     HEff4DHitHarvest(const std::string & name, 
