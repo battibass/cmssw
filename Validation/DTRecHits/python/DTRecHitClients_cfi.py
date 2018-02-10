@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-dtrechitclients = cms.EDAnalyzer("DTRecHitClients",
+dtrechitclients = cms.EDProducer("DTRecHitClients",
     doStep2 = cms.untracked.bool(False),
     # Switches for analysis at various steps
     doStep1 = cms.untracked.bool(False),
@@ -10,11 +10,12 @@ dtrechitclients = cms.EDAnalyzer("DTRecHitClients",
     local   = cms.untracked.bool(False)
 )
 
-dt2dsegmentclients = cms.EDAnalyzer("DT2DSegmentClients",
+dt2dsegmentclients = cms.EDProducer("DT2DSegmentClients",
+    do2D    = cms.untracked.bool(False),
     doSLPhi = cms.untracked.bool(False)
 )
-dt4dsegmentclients = cms.EDAnalyzer("DT4DSegmentClients",
-    local = cms.untracked.bool(False)
+dt4dsegmentclients = cms.EDProducer("DT4DSegmentClients",
+    doall = cms.untracked.bool(False)
 )
                                
 ##dtLocalRecoValidationClients = cms.Sequence(dt2dsegmentclients*dt4dsegmentclients)

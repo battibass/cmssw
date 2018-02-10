@@ -26,6 +26,7 @@ protected:
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
 
 private:
+  bool do2D_;
   bool doSLPhi_;
 
 };

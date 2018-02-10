@@ -11,6 +11,7 @@ using namespace edm;
 
 DT2DSegmentClients::DT2DSegmentClients(edm::ParameterSet const& pset)
 {
+  do2D_    = pset.getUntrackedParameter<bool>("do2D", false);
   doSLPhi_ = pset.getUntrackedParameter<bool>("doSLPhi", false);
 }
 
@@ -31,11 +32,13 @@ void DT2DSegmentClients::dqmEndJob(DQMStore::IBooker & booker, DQMStore::IGetter
   util.drawGFit(hPullPos->getTH1(), -5, 5, -5, 5);
   util.drawGFit(hPullAngle->getTH1(), -5, 5, -5, 5);
 
-  HEff2DHitHarvest hEff_RPhi("RPhi", booker, getter);  
-  HEff2DHitHarvest hEff_RZ("RZ", booker, getter);    
-  HEff2DHitHarvest hEff_RZ_W0("RZ_W0", booker, getter); 
-  HEff2DHitHarvest hEff_RZ_W1("RZ_W1", booker, getter); 
-  HEff2DHitHarvest hEff_RZ_W2("RZ_W2", booker, getter); 
+  if (do2D_) {
+    HEff2DHitHarvest hEff_RPhi("RPhi", booker, getter);  
+    HEff2DHitHarvest hEff_RZ("RZ", booker, getter);    
+    HEff2DHitHarvest hEff_RZ_W0("RZ_W0", booker, getter); 
+    HEff2DHitHarvest hEff_RZ_W1("RZ_W1", booker, getter); 
+    HEff2DHitHarvest hEff_RZ_W2("RZ_W2", booker, getter); 
+  }
   if (doSLPhi_) {
     HEff2DHitHarvest hEff_SuperPhi("SuperPhi", booker, getter);  
   }
