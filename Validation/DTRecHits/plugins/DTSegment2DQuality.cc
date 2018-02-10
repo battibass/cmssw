@@ -255,7 +255,7 @@ void DTSegment2DQuality::dqmAnalyze(edm::Event const& event, edm::EventSetup con
         hEff = histograms.h2DHitEff_RZ_W1;
       } else if (abs((*slId).wheel()) == 2) {
         hEff = histograms.h2DHitEff_RZ_W2;
-}
+      }
     }
     hEff->fill(etaSimSeg, phiSimSeg, posSimSeg, angleSimSeg, recHitFound);
   } // End of loop over superlayers
