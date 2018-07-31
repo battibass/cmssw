@@ -32,7 +32,11 @@
 #include "DataFormats/L1GlobalMuonTrigger/interface/L1MuGMTReadoutCollection.h"
 #include "DataFormats/L1DTTrackFinder/interface/L1MuDTChambPhContainer.h"
 #include "DataFormats/L1DTTrackFinder/interface/L1MuDTChambThContainer.h"
-#include <DataFormats/MuonReco/interface/MuonFwd.h>
+
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+
+#include "DQM/DTMonitorModule/src/ProbeMuonProvider.h"
 
 #include <vector>
 #include <string>
@@ -42,8 +46,9 @@ class DTGeometry;
 class DTChamberId;
 class DTTrigGeomUtils;
 
-class DTTriggerEfficiencyTask: public DQMEDAnalyzer{
-
+class DTTriggerEfficiencyTask: public DQMEDAnalyzer
+{
+  
  public:
 
   /// Constructor
@@ -78,26 +83,26 @@ class DTTriggerEfficiencyTask: public DQMEDAnalyzer{
 
  private:
 
-  int nevents;
-
-  std::string SegmArbitration;
+  int nEvents;
 
   bool processTM, processDDU, detailedPlots, checkRPCtriggers;
   std::vector<std::string> processTags;
-  int minBXDDU, maxBXDDU;
 
   float phiAccRange;
   int nMinHitsPhi;
+  int correctBXDDU;
 
   edm::EDGetTokenT<reco::MuonCollection> muons_Token_;
+  edm::EDGetTokenT<reco::VertexCollection> pvs_Token_;
   edm::EDGetTokenT<L1MuDTChambPhContainer> tm_Token_;
   edm::EDGetTokenT<DTLocalTriggerCollection> ddu_Token_;
-  edm::InputTag inputTagSEG;
+  edm::EDGetTokenT<DTRecSegment4DCollection> seg_Token_;
   edm::EDGetTokenT<L1MuGMTReadoutCollection> gmt_Token_;
 
-  edm::ParameterSet parameters;
   edm::ESHandle<DTGeometry> muonGeom;
   DTTrigGeomUtils* trigGeomUtils;
+  ProbeMuonProvider probeMuonProvider;
+
   std::map<uint32_t, std::map<std::string, MonitorElement*> > chamberHistos;
   std::map<int, std::map<std::string, MonitorElement*> > wheelHistos;
 

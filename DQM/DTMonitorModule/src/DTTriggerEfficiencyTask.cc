@@ -22,11 +22,12 @@
 #include "Geometry/DTGeometry/interface/DTTopology.h"
 
 // DT Digi
-#include <DataFormats/DTDigi/interface/DTDigi.h>
-#include <DataFormats/DTDigi/interface/DTDigiCollection.h>
+#include "DataFormats/DTDigi/interface/DTDigi.h"
+#include "DataFormats/DTDigi/interface/DTDigiCollection.h"
 
-// Muon tracks
-#include <DataFormats/MuonReco/interface/Muon.h>
+// Muons and Vertexes tracks
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
 
 //Root
 #include"TH1.h"
@@ -40,52 +41,69 @@
 using namespace edm;
 using namespace std;
 
-DTTriggerEfficiencyTask::DTTriggerEfficiencyTask(const edm::ParameterSet& ps) : trigGeomUtils(nullptr) {
-
-  LogTrace ("DTDQM|DTMonitorModule|DTTriggerEfficiencyTask")  << "[DTTriggerEfficiencyTask]: Constructor" << endl;
-
-  parameters = ps;
+DTTriggerEfficiencyTask::DTTriggerEfficiencyTask(const edm::ParameterSet& ps) : 
+  trigGeomUtils(nullptr),
+  probeMuonProvider(ProbeMuonProvider(ps.getUntrackedParameter<ParameterSet>("probeSelection")))
+{
+  
+  LogTrace ("DTDQM|DTMonitorModule|DTTriggerEfficiencyTask")  
+    << "[DTTriggerEfficiencyTask]: Constructor" << endl;
 
   muons_Token_ = consumes<reco::MuonCollection>(
-      parameters.getUntrackedParameter<edm::InputTag>("inputTagMuons"));
-  tm_Token_   = consumes<L1MuDTChambPhContainer>(
-      parameters.getUntrackedParameter<edm::InputTag>("inputTagTM"));
-  ddu_Token_   = consumes<DTLocalTriggerCollection>(
-      parameters.getUntrackedParameter<edm::InputTag>("inputTagDDU"));
-  inputTagSEG  = parameters.getUntrackedParameter<edm::InputTag>("inputTagSEG");
-  gmt_Token_   = consumes<L1MuGMTReadoutCollection>(
-      parameters.getUntrackedParameter<edm::InputTag>("inputTagGMT"));
+      ps.getUntrackedParameter<edm::InputTag>("inputTagMuons"));
+  pvs_Token_ = consumes<reco::VertexCollection>(
+      ps.getUntrackedParameter<edm::InputTag>("inputTagPVs"));
+  seg_Token_ = consumes<DTRecSegment4DCollection>(
+      ps.getUntrackedParameter<edm::InputTag>("inputTagSegments"));
 
-  SegmArbitration = parameters.getUntrackedParameter<std::string>("SegmArbitration");
+  detailedPlots = ps.getUntrackedParameter<bool>("detailedAnalysis");
+  processTM = ps.getUntrackedParameter<bool>("processTM");
+  processDDU = ps.getUntrackedParameter<bool>("processDDU");
 
-  detailedPlots = parameters.getUntrackedParameter<bool>("detailedAnalysis");
-  processTM = parameters.getUntrackedParameter<bool>("processTM");
-  processDDU = parameters.getUntrackedParameter<bool>("processDDU");
-  minBXDDU = parameters.getUntrackedParameter<int>("minBXDDU");
-  maxBXDDU = parameters.getUntrackedParameter<int>("maxBXDDU");
+  checkRPCtriggers = ps.getUntrackedParameter<bool>("checkRPCtriggers");
+  nMinHitsPhi  = ps.getUntrackedParameter<int>("nMinHitsPhi");
+  phiAccRange  = ps.getUntrackedParameter<double>("phiAccRange");
+  correctBXDDU = ps.getUntrackedParameter<int>("correctBXDDU");
 
-  checkRPCtriggers = parameters.getUntrackedParameter<bool>("checkRPCtriggers");
-  nMinHitsPhi = parameters.getUntrackedParameter<int>("nMinHitsPhi");
-  phiAccRange = parameters.getUntrackedParameter<double>("phiAccRange");
+  if (processTM) 
+    {
+      processTags.push_back("TM");
+      tm_Token_ = consumes<L1MuDTChambPhContainer>(
+           ps.getUntrackedParameter<edm::InputTag>("inputTagTM"));
+    }
 
-  if (processTM) processTags.push_back("TM");
-  if (processDDU) {processTags.push_back("DDU");
-		  ddu_Token_   = consumes<DTLocalTriggerCollection>(
-      parameters.getUntrackedParameter<edm::InputTag>("inputTagDDU"));
-  	}
-  if (!processTM && !processDDU) LogError ("DTDQM|DTMonitorModule|DTTriggerEfficiencyTask")  << "[DTTriggerEfficiencyTask]: Error, no trigger source (DDU or Twinmux) has been selected!!" <<endl;
+  if (processDDU) 
+    {
+      processTags.push_back("DDU");
+      ddu_Token_   = consumes<DTLocalTriggerCollection>(
+	   ps.getUntrackedParameter<edm::InputTag>("inputTagDDU"));
+    }
+
+  if (checkRPCtriggers) 
+    {
+      gmt_Token_   = consumes<L1MuGMTReadoutCollection>(
+           ps.getUntrackedParameter<edm::InputTag>("inputTagGMT"));
+    }
+
+  if (!processTM && !processDDU) 
+    LogError ("DTDQM|DTMonitorModule|DTTriggerEfficiencyTask")  
+      << "[DTTriggerEfficiencyTask]: Error, no trigger source (DDU or TM) has been selected!!" 
+      << endl;
 
 }
 
 
-DTTriggerEfficiencyTask::~DTTriggerEfficiencyTask() {
+DTTriggerEfficiencyTask::~DTTriggerEfficiencyTask() 
+{
 
-  LogTrace ("DTDQM|DTMonitorModule|DTTriggerEfficiencyTask")  << "[DTTriggerEfficiencyTask]: analyzed " << nevents << " events" << endl;
+  LogTrace ("DTDQM|DTMonitorModule|DTTriggerEfficiencyTask")  
+    << "[DTTriggerEfficiencyTask]: analyzed " << nEvents << " events" << endl;
 
 }
 
-void DTTriggerEfficiencyTask::dqmBeginRun(const edm::Run& run, const edm::EventSetup& context) {
-
+void DTTriggerEfficiencyTask::dqmBeginRun(const edm::Run& run, const edm::EventSetup& context) 
+{
+  
   // Get the geometry
   context.get<MuonGeometryRecord>().get(muonGeom);
   trigGeomUtils = new DTTrigGeomUtils(muonGeom);
@@ -94,11 +112,13 @@ void DTTriggerEfficiencyTask::dqmBeginRun(const edm::Run& run, const edm::EventS
 
 void DTTriggerEfficiencyTask::bookHistograms(DQMStore::IBooker & ibooker,
                                              edm::Run const & run,
-                                             edm::EventSetup const & context) {
+                                             edm::EventSetup const & context) 
+{
 
-  LogTrace ("DTDQM|DTMonitorModule|DTTriggerEfficiencyTask") << "[DTTriggerEfficiencyTask]: bookHistograms" << endl;
+  LogTrace ("DTDQM|DTMonitorModule|DTTriggerEfficiencyTask") 
+    << "[DTTriggerEfficiencyTask]: bookHistograms" << endl;
 
-  nevents = 0;
+  nEvents = 0;
   for (int wh=-2;wh<=2;++wh){
     vector<string>::const_iterator tagIt  = processTags.begin();
     vector<string>::const_iterator tagEnd = processTags.end();
@@ -114,154 +134,180 @@ void DTTriggerEfficiencyTask::bookHistograms(DQMStore::IBooker & ibooker,
       }
     }
   }
+
 }
 
 
-void DTTriggerEfficiencyTask::analyze(const edm::Event& e, const edm::EventSetup& c){
+void DTTriggerEfficiencyTask::analyze(const edm::Event& e, const edm::EventSetup& c)
+{
 
-  nevents++;
+  nEvents++;
 
-  if (checkRPCtriggers){ //For pre-2016 Era compatibility
-	if (!hasRPCTriggers(e)) { return; }
-	}
-  map<DTChamberId,const L1MuDTChambPhDigi*> phBestTM;
-  map<DTChamberId,const DTLocalTrigger*>    phBestDDU;
-  // Getting best TM Stuff
-  edm::Handle<L1MuDTChambPhContainer> l1DTTPGPh;
-  e.getByToken(tm_Token_, l1DTTPGPh);
-  vector<L1MuDTChambPhDigi> const*  phTrigs = l1DTTPGPh->getContainer();
-  //empty from dttfDigis, needs emulator working?
-  vector<L1MuDTChambPhDigi>::const_iterator iph  = phTrigs->begin();
-  vector<L1MuDTChambPhDigi>::const_iterator iphe = phTrigs->end();
-  for(; iph !=iphe ; ++iph) {
-
-    int phwheel = iph->whNum();
-    int phsec   = iph->scNum() + 1; // DTTF numbering [0:11] -> DT numbering [1:12]
-    int phst    = iph->stNum();
-    int phcode  = iph->code();
-
-    DTChamberId chId(phwheel,phst,phsec);
-
-    if( phcode < 7 && (phBestTM.find(chId) == phBestTM.end() ||
-          phcode>phBestTM[chId]->code()) ) phBestTM[chId] = &(*iph);
-  }
-
-  //Getting Best DDU Stuff
-  if (processDDU){
-  Handle<DTLocalTriggerCollection> trigsDDU;
-  e.getByToken(ddu_Token_, trigsDDU);
-  DTLocalTriggerCollection::DigiRangeIterator detUnitIt;
-
-  for (detUnitIt=trigsDDU->begin();detUnitIt!=trigsDDU->end();++detUnitIt){
-
-    const DTChamberId& id = (*detUnitIt).first;
-    const DTLocalTriggerCollection::Range& range = (*detUnitIt).second;
-
-    DTLocalTriggerCollection::const_iterator trigIt  = range.first;
-    DTLocalTriggerCollection::const_iterator trigEnd = range.second;
-    for (; trigIt!= trigEnd;++trigIt){
-      int quality = trigIt->quality();
-      if(quality>-1 && quality<7 &&
-          (phBestDDU.find(id) == phBestDDU.end() ||
-           quality>phBestDDU[id]->quality()) ) phBestDDU[id] = &(*trigIt);
+  if (checkRPCtriggers)
+    { //For pre-2016 Era compatibility
+      if (!hasRPCTriggers(e)) { return; }
     }
 
-  }
-  }//processDDU
+  map<DTChamberId,const L1MuDTChambPhDigi*> phBestTM;
+  map<DTChamberId,const DTLocalTrigger*>    phBestDDU;
 
-  //Getting Best Segments
-  vector<const DTRecSegment4D*> best4DSegments;
+  // Getting best TM Stuff
+  if (processTM)
+    {
+      edm::Handle<L1MuDTChambPhContainer> l1DTTPGPh;
+      e.getByToken(tm_Token_, l1DTTPGPh);
+      vector<L1MuDTChambPhDigi> const*  phTrigs = l1DTTPGPh->getContainer();
+      
+      for(const auto & iPh : (*phTrigs) ) 
+	{
+	  
+	  int phWheel = iPh.whNum();
+	  int phSec   = iPh.scNum() + 1; // DTTF numbering [0:11] -> DT numbering [1:12]
+	  int phSt    = iPh.stNum();
+	  int phBX    = iPh.bxNum();
+	  int phCode  = iPh.code();
+	  
+	  DTChamberId chId(phWheel,phSt,phSec);
+	  
+	  if( phBX == 0  &&
+	      phCode < 7 && 
+	      ( phBestTM.find(chId) == phBestTM.end() ||
+		phCode>phBestTM[chId]->code()
+		) 
+	      ) 
+	    phBestTM[chId] = &iPh;
+	}
+    }
+
+  //Getting Best DDU Stuff
+  if (processDDU)
+    {
+      Handle<DTLocalTriggerCollection> trigsDDU;
+      e.getByToken(ddu_Token_, trigsDDU);
+      DTLocalTriggerCollection::DigiRangeIterator detUnitIt;
+
+      // CB for (detUnitIt=trigsDDU->begin();detUnitIt!=trigsDDU->end();++detUnitIt){
+      for (const auto & detUnit : (*trigsDDU) )
+	{
+	  
+	  const DTChamberId& id = detUnit.first;
+	  const DTLocalTriggerCollection::Range& range = detUnit.second;
+	  
+	  DTLocalTriggerCollection::const_iterator trigIt  = range.first;
+	  DTLocalTriggerCollection::const_iterator trigEnd = range.second;
+	  
+	  for (; trigIt!= trigEnd;++trigIt)
+	    {
+	      int bx      = trigIt->bx();
+	      int quality = trigIt->quality();
+
+	      if( bx == correctBXDDU &&
+		  quality>-1 && quality<7 &&
+		  ( phBestDDU.find(id) == phBestDDU.end() ||
+		    quality>phBestDDU[id]->quality()
+		  )  
+		) 
+		phBestDDU[id] = &(*trigIt);
+	    }
+	}
+    }
+  
+  //Getting Matched Segments
+  vector<const DTRecSegment4D*> matched4DSegments;
 
   Handle<reco::MuonCollection> muons;
   e.getByToken(muons_Token_, muons);
-  reco::MuonCollection::const_iterator mu;
 
-  for( mu = muons->begin(); mu != muons->end(); ++mu ) {
+  // Get the PV collection
+  Handle<reco::VertexCollection> pvs;
+  e.getByToken(pvs_Token_, pvs);
 
-    // Make sure that is standalone muon
-    if( !((*mu).isStandAloneMuon()) ) {continue;}
+  // Get a vector of segments matched to muons
+  set<size_t> matchedSegmentsIdx;
 
-    // Get the chambers compatible with the muon
-    const vector<reco::MuonChamberMatch> matchedChambers = (*mu).matches();
-    vector<reco::MuonChamberMatch>::const_iterator chamber;
+  matchedSegmentsIdx = probeMuonProvider.segmentCandidatesIdx((*muons),(*pvs));
 
-    for( chamber = matchedChambers.begin(); chamber != matchedChambers.end(); ++chamber ) {
+  // Get the segment collection from the event
+  Handle<DTRecSegment4DCollection> segments;
+  e.getByToken(seg_Token_, segments);
 
-      // look only in DTs
-      if( chamber->detector() != MuonSubdetId::DT ) {continue;}
+  DTRecSegment4DCollection::const_iterator segmentIt  = segments->begin();
+  DTRecSegment4DCollection::const_iterator segmentEnd = segments->end();
 
-      // Get the matched segments in the chamber
-      const vector<reco::MuonSegmentMatch> matchedSegments = (*chamber).segmentMatches;
-      vector<reco::MuonSegmentMatch>::const_iterator segment;
+  for(std::size_t iSegment = 0;
+      segmentIt != segmentEnd; ++segmentIt, ++ iSegment)
+    {
+    
+      for( const auto & matchedSegIdx : matchedSegmentsIdx )
+	{
+	  if( matchedSegIdx == iSegment &&
+	      segmentIt->hasPhi() && 
+	      (segmentIt->chamberId().station() == 4 || segmentIt->hasZed()) )
+	    {
+	      matched4DSegments.push_back(&(*segmentIt));
+	    }
+	}
 
-      for( segment = matchedSegments.begin(); segment != matchedSegments.end(); ++segment ) {
-
-        edm::Ref<DTRecSegment4DCollection> dtSegment = segment->dtSegmentRef;
-
-        // Segment Arbitration
-        if( SegmArbitration == "SegmentArbitration"
-            && !((*segment).isMask(reco::MuonSegmentMatch::BestInChamberByDR)) ) {continue;}
-
-        if( SegmArbitration == "SegmentAndTrackArbitration"
-            && (!((*segment).isMask(reco::MuonSegmentMatch::BestInChamberByDR)) ||
-              !((*segment).isMask(reco::MuonSegmentMatch::BelongsToTrackByDR))) ) {continue;}
-
-        if( SegmArbitration == "SegmentAndTrackArbitrationCleaned"
-            && (!((*segment).isMask(reco::MuonSegmentMatch::BestInChamberByDR))  ||
-              !((*segment).isMask(reco::MuonSegmentMatch::BelongsToTrackByDR)) ||
-              !((*segment).isMask(reco::MuonSegmentMatch::BelongsToTrackByCleaning))) ) {continue;}
-
-
-        if( (*dtSegment).hasPhi() ) {
-          best4DSegments.push_back(&(*dtSegment));
-        }
-
-      }// end loop on matched segments
-    }// end loop on compatible chambers
-  }// end loop on muons
+    }
 
   // Plot filling
-  vector<const DTRecSegment4D*>::const_iterator btrack;
-  for ( btrack = best4DSegments.begin(); btrack != best4DSegments.end(); ++btrack ){
-    int wheel    = (*btrack)->chamberId().wheel();
-    int station  = (*btrack)->chamberId().station();
-    int scsector = 0;
-    float x, xdir, y, ydir;
-    trigGeomUtils->computeSCCoordinates((*btrack),scsector,x,xdir,y,ydir);
-    int nHitsPhi = (*btrack)->phiSegment()->degreesOfFreedom()+2;
-    DTChamberId dtChId(wheel,station,scsector);
-    uint32_t indexCh = dtChId.rawId();
-    map<string, MonitorElement*> &innerChME = chamberHistos[indexCh];
-    map<string, MonitorElement*> &innerWhME = wheelHistos[wheel];
 
-    if (fabs(xdir)<phiAccRange && nHitsPhi>=nMinHitsPhi){
-      vector<string>::const_iterator tagIt  = processTags.begin();
-      vector<string>::const_iterator tagEnd = processTags.end();
-      for (; tagIt!=tagEnd; ++tagIt) {
-	int qual = (*tagIt) == "TM" ?
-          phBestTM.find(dtChId) != phBestTM.end() ? phBestTM[dtChId]->code() : -1 :
-          phBestDDU.find(dtChId) != phBestDDU.end() ? phBestDDU[dtChId]->quality() : -1;
-        innerWhME.find((*tagIt) + "_TrigEffDenum")->second->Fill(scsector,station);
+  for ( const auto & segment : matched4DSegments )
+    {
+      int wheel    = segment->chamberId().wheel();
+      int station  = segment->chamberId().station();
+      
+      int trigSector = 0;
+      float x, xDir, y, yDir;
+      trigGeomUtils->computeSCCoordinates(segment,trigSector,x,xDir,y,yDir);
+      
+      int nHitsPhi = segment->phiSegment()->degreesOfFreedom()+2;
+      
+      DTChamberId dtChId(wheel,station,trigSector);
+      uint32_t indexCh = dtChId.rawId();
+      
+      map<string, MonitorElement*> &innerChME = chamberHistos[indexCh];
+      map<string, MonitorElement*> &innerWhME = wheelHistos[wheel];
+      
+      if ( fabs(xDir) < phiAccRange && 
+	   nHitsPhi>=nMinHitsPhi )
+	{
 
-        if ( qual>=0 && qual<7 ) {
-          innerWhME.find((*tagIt) + "_TrigEffNum")->second->Fill(scsector,station);
-          if ( qual>=4 ) {
-            innerWhME.find((*tagIt) + "_TrigEffCorrNum")->second->Fill(scsector,station);
-          }
-        }
-        if (detailedPlots) {
-          innerChME.find((*tagIt) + "_TrackPosvsAngle")->second->Fill(xdir,x);
-          if ( qual>=0 && qual<7 ) {
-            innerChME.find((*tagIt) + "_TrackPosvsAngleAnyQual")->second->Fill(xdir,x);
-            if ( qual>=4 ) {
-              innerChME.find((*tagIt) + "_TrackPosvsAngleCorr")->second->Fill(xdir,x);
-            }
-          }
-        }
-      }
+	  for (const auto & tag : processTags ) 
+	    {
+
+	      int qual = tag == "TM" ?
+		phBestTM.find(dtChId) != phBestTM.end() ? phBestTM[dtChId]->code() : -1 :
+		phBestDDU.find(dtChId) != phBestDDU.end() ? phBestDDU[dtChId]->quality() : -1;
+	      
+	      innerWhME.find(tag + "_TrigEffDenum")->second->Fill(trigSector,station);
+	      
+	      if ( qual>=0 && qual<7 ) 
+		{
+		  innerWhME.find(tag + "_TrigEffNum")->second->Fill(trigSector,station);
+		  if ( qual>=4 ) 
+		    {
+		      innerWhME.find(tag + "_TrigEffCorrNum")->second->Fill(trigSector,station);
+		    }
+		}
+	      
+	      if (detailedPlots) 
+		{
+		  innerChME.find(tag + "_TrackPosvsAngle")->second->Fill(xDir,x);
+		  
+		  if ( qual>=0 && qual<7 ) 
+		    {
+		      innerChME.find(tag + "_TrackPosvsAngleAnyQual")->second->Fill(xDir,x);
+		      if ( qual>=4 ) 
+			{
+			  innerChME.find(tag + "_TrackPosvsAngleCorr")->second->Fill(xDir,x);
+			}
+		    }
+		}
+	    }
+	}
     }
-  }
-
+  
 }
 
 bool DTTriggerEfficiencyTask::hasRPCTriggers(const edm::Event& e) {
