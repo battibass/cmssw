@@ -84,6 +84,9 @@ class DTRunConditionVarClient: public DQMEDHarvester{
     float minRangeT0;
     float maxRangeT0;
 
+    float minHistoRangeT0;
+    float maxHistoRangeT0;
+
     float maxGoodVDriftDev;
     float minBadVDriftDev; 
     float maxGoodT0;       

@@ -44,6 +44,9 @@ DTRunConditionVarClient::DTRunConditionVarClient(const ParameterSet& pSet)
   minRangeT0 = pSet.getUntrackedParameter<double>("minRangeT0");
   maxRangeT0 = pSet.getUntrackedParameter<double>("maxRangeT0");
 
+  minHistoRangeT0 = pSet.getUntrackedParameter<double>("minHistoRangeT0");
+  maxHistoRangeT0 = pSet.getUntrackedParameter<double>("maxHistoRangeT0");
+
   maxGoodVDriftDev = pSet.getUntrackedParameter<double>("maxGoodVDriftDev");
   minBadVDriftDev = pSet.getUntrackedParameter<double>("minBadVDriftDev");
   maxGoodT0 = pSet.getUntrackedParameter<double>("maxGoodT0");
@@ -135,6 +138,7 @@ void DTRunConditionVarClient::dqmEndJob(DQMStore::IBooker & ibooker, DQMStore::I
 	  return;
 	}
 	  
+	T0ME->setAxisRange(minHistoRangeT0,maxHistoRangeT0);
 
         // Get the means per chamber
         float vDriftMean = VDriftME->getMean();

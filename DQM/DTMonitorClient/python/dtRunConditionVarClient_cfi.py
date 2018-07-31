@@ -8,6 +8,9 @@ dtRunConditionVarClient = DQMEDHarvester("DTRunConditionVarClient",
    minRangeT0      = cms.untracked.double(-5.),
    maxRangeT0      = cms.untracked.double(5.),
 
+   minHistoRangeT0 = cms.untracked.double(-15.),
+   maxHistoRangeT0 = cms.untracked.double(15.),
+
    maxGoodVDriftDev = cms.untracked.double(0.006),
    minBadVDriftDev  = cms.untracked.double(0.018),
 
