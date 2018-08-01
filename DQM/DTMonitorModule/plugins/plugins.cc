@@ -24,6 +24,9 @@ DEFINE_FWK_MODULE(DTChamberEfficiency);
 #include <DQM/DTMonitorModule/src/DTRunConditionVar.h>
 DEFINE_FWK_MODULE(DTRunConditionVar);
 
+#include <DQM/DTMonitorModule/src/DTObjSummaryTask.h>
+DEFINE_FWK_MODULE(DTObjSummaryTask);
+
 #include "DQM/DTMonitorModule/src/DTNoiseTask.h"
 DEFINE_FWK_MODULE(DTNoiseTask);
 
