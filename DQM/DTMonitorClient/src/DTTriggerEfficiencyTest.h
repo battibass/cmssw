@@ -33,7 +33,9 @@ public:
 protected:
 
   /// Compute 1D/2D efficiency plots
-  void makeEfficiencyME(TH2F* numerator, TH2F* denominator, MonitorElement* result2DWh, MonitorElement* result1DWh, MonitorElement* result1D);
+  void makeEfficiencyME(int wh, TH2F* numerator, TH2F* denominator, 
+			MonitorElement* result2DWh, MonitorElement* result1DWh, 
+			MonitorElement* result2D,   MonitorElement* result1D);
 
   /// Compute 2D efficiency plots
   void makeEfficiencyME(TH2F* numerator, TH2F* denominator, MonitorElement* result2DWh);
@@ -60,7 +62,7 @@ protected:
  private:
 
   std::map<std::string, MonitorElement*> globalEffDistr;
-  std::map<int,std::map<std::string,MonitorElement*> > EffDistrPerWh;
+  std::map<int,std::map<std::string,MonitorElement*> > effDistrPerWh;
   std::map<uint32_t,std::map<std::string,MonitorElement*> > chambME;
   DTTrigGeomUtils* trigGeomUtils;
   bool detailedPlots;

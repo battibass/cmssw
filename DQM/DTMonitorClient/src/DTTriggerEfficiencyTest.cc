@@ -89,17 +89,22 @@ void DTTriggerEfficiencyTest::runClientDiagnostic(DQMStore::IBooker & ibooker, D
             bookWheelHistos(ibooker,wh,"TrigEffCorrPhi","");  
           }
 
-          MonitorElement* Eff1DAll_TrigEffPhi = (&globalEffDistr)->find(fullName("TrigEffPhi"))->second;
-          MonitorElement* Eff1DAll_TrigEffCorrPhi = (&globalEffDistr)->find(fullName("TrigEffCorrPhi"))->second;
+          MonitorElement* Eff1DAll_TrigEffPhi = globalEffDistr.find(fullName("TrigEffPhi"))->second;
+          MonitorElement* Eff1DAll_TrigEffCorrPhi = globalEffDistr.find(fullName("TrigEffCorrPhi"))->second;
 
-          MonitorElement* Eff1DWh_TrigEffPhi = (&(EffDistrPerWh[wh]))->find(fullName("TrigEffPhi"))->second;
-          MonitorElement* Eff1DWh_TrigEffCorrPhi = (&(EffDistrPerWh[wh]))->find(fullName("TrigEffCorrPhi"))->second;
+          MonitorElement* Eff2DAll_TrigEffPhi = cmsME.find(fullName("TrigEffPhi"))->second;
+          MonitorElement* Eff2DAll_TrigEffCorrPhi = cmsME.find(fullName("TrigEffCorrPhi"))->second;
 
-          MonitorElement* Eff2DWh_TrigEffPhi = (&(whME[wh]))->find(fullName("TrigEffPhi"))->second;
-          MonitorElement* Eff2DWh_TrigEffCorrPhi = (&(whME[wh]))->find(fullName("TrigEffCorrPhi"))->second;
+          MonitorElement* Eff1DWh_TrigEffPhi = effDistrPerWh[wh].find(fullName("TrigEffPhi"))->second;
+          MonitorElement* Eff1DWh_TrigEffCorrPhi = effDistrPerWh[wh].find(fullName("TrigEffCorrPhi"))->second;
 
-          makeEfficiencyME(TrigEffNum,TrigEffDenum,Eff2DWh_TrigEffPhi,Eff1DWh_TrigEffPhi,Eff1DAll_TrigEffPhi);
-          makeEfficiencyME(TrigEffCorrNum,TrigEffDenum,Eff2DWh_TrigEffCorrPhi,Eff1DWh_TrigEffCorrPhi,Eff1DAll_TrigEffCorrPhi);
+          MonitorElement* Eff2DWh_TrigEffPhi = whME[wh].find(fullName("TrigEffPhi"))->second;
+          MonitorElement* Eff2DWh_TrigEffCorrPhi = whME[wh].find(fullName("TrigEffCorrPhi"))->second;
+
+          makeEfficiencyME(wh,TrigEffNum,TrigEffDenum,Eff2DWh_TrigEffPhi,
+			   Eff1DWh_TrigEffPhi,Eff2DAll_TrigEffPhi,Eff1DAll_TrigEffPhi);
+          makeEfficiencyME(wh,TrigEffCorrNum,TrigEffDenum,Eff2DWh_TrigEffCorrPhi,
+			   Eff1DWh_TrigEffCorrPhi,Eff2DAll_TrigEffCorrPhi,Eff1DAll_TrigEffCorrPhi);
 
         }
 
@@ -137,9 +142,12 @@ void DTTriggerEfficiencyTest::runClientDiagnostic(DQMStore::IBooker & ibooker, D
 
 }
 
-void DTTriggerEfficiencyTest::makeEfficiencyME(TH2F* numerator, TH2F* denominator, MonitorElement* result2DWh, MonitorElement* result1DWh, MonitorElement* result1D){
+void DTTriggerEfficiencyTest::makeEfficiencyME(int wh, TH2F* numerator, TH2F* denominator, 
+					       MonitorElement* result2DWh, MonitorElement* result1DWh, 
+					       MonitorElement* result2D, MonitorElement* result1D){
 
   TH2F* efficiency = result2DWh->getTH2F();
+  TH2F* eff2DMap   = result2D->getTH2F();
   efficiency->Divide(numerator,denominator,1,1,"");
 
   int nbinsx = efficiency->GetNbinsX();
@@ -148,6 +156,10 @@ void DTTriggerEfficiencyTest::makeEfficiencyME(TH2F* numerator, TH2F* denominato
     for (int biny=1; biny<=nbinsy; ++biny){
       float error = 0;
       float bineff = efficiency->GetBinContent(binx,biny);
+
+      int mapBinX = (wh + 3) + (biny -1) * 5; 
+
+      eff2DMap->SetBinContent(mapBinX,binx,bineff);
 
       result1DWh->Fill(bineff);
       result1D->Fill(bineff);
@@ -158,9 +170,11 @@ void DTTriggerEfficiencyTest::makeEfficiencyME(TH2F* numerator, TH2F* denominato
       else {
         error = 1;
         efficiency->SetBinContent(binx,biny,0.);
+	eff2DMap->SetBinContent(mapBinX,binx,0);
       }
 
       efficiency->SetBinError(binx,biny,error);
+      eff2DMap->SetBinError(mapBinX,binx,error);
     }
   }
 
@@ -223,6 +237,12 @@ void DTTriggerEfficiencyTest::bookHistos(DQMStore::IBooker & ibooker,string hTag
   globalEffDistr[fullTag] = ibooker.book1D(hname.c_str(),hname.c_str(),51,0.,1.02);
   globalEffDistr[fullTag] ->setAxisTitle("Trig Eff",1);
 
+  hname = fullTag + "_GlbSummary";
+
+  cmsME[fullTag] = ibooker.book2D(hname.c_str(),hname.c_str(),20,0.5,20.5,12,0.5,12.5);
+  cmsME[fullTag] ->setAxisTitle("wheel/station",1);
+  cmsME[fullTag] ->setAxisTitle("sector",2);
+
 }
 
 void DTTriggerEfficiencyTest::bookWheelHistos(DQMStore::IBooker & ibooker,int wheel,string hTag,string folder) {
@@ -249,7 +269,7 @@ void DTTriggerEfficiencyTest::bookWheelHistos(DQMStore::IBooker & ibooker,int wh
 
   LogTrace(category()) << "[" << testName << "Test]: booking "<< basedir << hname;
 
-  (EffDistrPerWh[wheel])[fullTag] = ibooker.book1D(hnameAll.c_str(),hnameAll.c_str(),51,0.,1.02);
+  (effDistrPerWh[wheel])[fullTag] = ibooker.book1D(hnameAll.c_str(),hnameAll.c_str(),51,0.,1.02);
 
   if (hTag.find("Phi")!= string::npos ||
       hTag.find("Summary") != string::npos ){    
