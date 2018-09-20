@@ -248,17 +248,13 @@ def appendCSCChamberAgingAtL1Trigger(process):
         sys.stderr.write("[appendCSCChamberMasker] : Found simCscTriggerPrimitivesDigis, appending producer for aged CSCs and corresponding TriggerPrimitives producer\n")
 
         process.simAgedMuonCSCDigis = _cscChamberMasker.clone()
+        process.simAgedMuonCSCDigis.runAtRaw = cms.bool(False)
         process.simAgedMuonCSCDigis.stripDigiTag = cms.InputTag("simMuonCSCDigis", "MuonCSCStripDigi")
         process.simAgedMuonCSCDigis.wireDigiTag = cms.InputTag("simMuonCSCDigis", "MuonCSCWireDigi") 
-        process.simAgedMuonCSCDigis.comparatorDigiTag = cms.InputTag("simMuonCSCDigis", "MuonCSCComparatorDigi")
-        process.simAgedMuonCSCDigis.rpcDigiTag = cms.InputTag("simMuonCSCDigis", "MuonCSCRPCDigi") 
-        process.simAgedMuonCSCDigis.alctDigiTag = cms.InputTag("simCscTriggerPrimitiveDigis", "", \
-                                                        processName = cms.InputTag.skipCurrentProcess())
-        process.simAgedMuonCSCDigis.clctDigiTag = cms.InputTag("simCscTriggerPrimitiveDigis", "", \
-                                                        processName = cms.InputTag.skipCurrentProcess())
+        process.simAgedMuonCSCDigis.compDigiTag = cms.InputTag("simMuonCSCDigis", "MuonCSCComparatorDigi")
 
         process.simCscTriggerPrimitiveDigis = _cscTriggerPrimitiveDigis.clone()
-        process.simCscTriggerPrimitiveDigis.CSCComparatorDigiProducer = cms.InputTag( 'simMuonCSCDigis', 'MuonCSCComparatorDigi' )
+        process.simCscTriggerPrimitiveDigis.CSCComparatorDigiProducer = cms.InputTag( 'simAgedMuonCSCDigis', 'MuonCSCComparatorDigi' )
         process.simCscTriggerPrimitiveDigis.CSCWireDigiProducer       = cms.InputTag( 'simAgedMuonCSCDigis', 'MuonCSCWireDigi' )
 
         process.withAgedCscTriggerSequence = cms.Sequence(process.simAgedMuonCSCDigis + process.simCscTriggerPrimitiveDigis)

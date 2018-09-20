@@ -47,6 +47,8 @@
 #include "DataFormats/CSCDigi/interface/CSCStripDigiCollection.h"
 #include "DataFormats/CSCDigi/interface/CSCWireDigi.h"
 #include "DataFormats/CSCDigi/interface/CSCWireDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCComparatorDigi.h"
+#include "DataFormats/CSCDigi/interface/CSCComparatorDigiCollection.h"
 #include "DataFormats/CSCDigi/interface/CSCCLCTDigi.h"
 #include "DataFormats/CSCDigi/interface/CSCCLCTDigiCollection.h"
 #include "DataFormats/CSCDigi/interface/CSCALCTDigi.h"
@@ -96,9 +98,11 @@ private:
   // ----------member data ---------------------------
 
   edm::EDGetTokenT <CSCStripDigiCollection> m_stripDigiToken;
+  edm::EDGetTokenT <CSCComparatorDigiCollection>  m_compDigiToken;
   edm::EDGetTokenT <CSCWireDigiCollection>  m_wireDigiToken;
   edm::EDGetTokenT <CSCCLCTDigiCollection>  m_clctDigiToken;
   edm::EDGetTokenT <CSCALCTDigiCollection>  m_alctDigiToken;
+  bool m_runAtRaw;
   std::map<CSCDetId, std::pair<unsigned int,float> > m_CSCEffs;  
   
 };
@@ -119,11 +123,21 @@ CSCChamberMasker::CSCChamberMasker(const edm::ParameterSet& iConfig)
     :
   m_stripDigiToken(consumes<CSCStripDigiCollection>(iConfig.getParameter<edm::InputTag>("stripDigiTag")) )
   ,m_wireDigiToken(consumes<CSCWireDigiCollection>(iConfig.getParameter<edm::InputTag>("wireDigiTag")) )
-  ,m_clctDigiToken(consumes<CSCCLCTDigiCollection>(iConfig.getParameter<edm::InputTag>("clctDigiTag")) )
-  ,m_alctDigiToken(consumes<CSCALCTDigiCollection>(iConfig.getParameter<edm::InputTag>("alctDigiTag")) )
+  ,m_runAtRaw(iConfig.getParameter<bool>("runAtRaw") )
 {
 
+  if (m_runAtRaw)
+    {
+      m_clctDigiToken = consumes<CSCCLCTDigiCollection>(iConfig.getParameter<edm::InputTag>("clctDigiTag"));
+      m_alctDigiToken = consumes<CSCALCTDigiCollection>(iConfig.getParameter<edm::InputTag>("alctDigiTag"));
+    }
+  else
+    {
+      m_compDigiToken = consumes<CSCComparatorDigiCollection>(iConfig.getParameter<edm::InputTag>("compDigiTag"));
+    }
+
   produces<CSCStripDigiCollection>("MuonCSCStripDigi");
+  produces<CSCComparatorDigiCollection>("MuonCSCComparatorDigi");
   produces<CSCWireDigiCollection>("MuonCSCWireDigi");
   produces<CSCCLCTDigiCollection>("MuonCSCCLCTDigi");
   produces<CSCALCTDigiCollection>("MuonCSCALCTDigi");
@@ -150,6 +164,7 @@ CSCChamberMasker::produce(edm::Event& event, const edm::EventSetup& conditions)
   CLHEP::HepRandomEngine& randGen = randGenService->getEngine(event.streamID());
  
   std::unique_ptr<CSCStripDigiCollection> filteredStripDigis(new CSCStripDigiCollection());
+  std::unique_ptr<CSCComparatorDigiCollection> filteredCompDigis(new CSCComparatorDigiCollection());
   std::unique_ptr<CSCWireDigiCollection> filteredWireDigis(new CSCWireDigiCollection());
   std::unique_ptr<CSCCLCTDigiCollection> filteredCLCTDigis(new CSCCLCTDigiCollection());
   std::unique_ptr<CSCALCTDigiCollection> filteredALCTDigis(new CSCALCTDigiCollection());
@@ -158,14 +173,23 @@ CSCChamberMasker::produce(edm::Event& event, const edm::EventSetup& conditions)
   ageDigis<CSCStripDigi>(event,m_stripDigiToken,randGen,filteredStripDigis);
   ageDigis<CSCWireDigi>(event,m_wireDigiToken,randGen,filteredWireDigis);
 
-  // Don't touch CLCT or ALCT digis
-  copyDigis<CSCCLCTDigi>(event,m_clctDigiToken,filteredCLCTDigis);
-  copyDigis<CSCALCTDigi>(event,m_alctDigiToken,filteredALCTDigis);
-
   event.put(std::move(filteredStripDigis), "MuonCSCStripDigi");
-  event.put(std::move(filteredWireDigis), "MuonCSCWireDigi");
-  event.put(std::move(filteredCLCTDigis), "MuonCSCCLCTDigi");
-  event.put(std::move(filteredALCTDigis), "MuonCSCALCTDigi");
+  event.put(std::move(filteredWireDigis),  "MuonCSCWireDigi");
+
+  if (m_runAtRaw)
+    {  
+      // Don't touch CLCT or ALCT digis but produce them when running on RAW
+      copyDigis<CSCCLCTDigi>(event,m_clctDigiToken,filteredCLCTDigis);
+      copyDigis<CSCALCTDigi>(event,m_alctDigiToken,filteredALCTDigis);
+      event.put(std::move(filteredCLCTDigis),  "MuonCSCCLCTDigi");
+      event.put(std::move(filteredALCTDigis),  "MuonCSCALCTDigi");
+    }
+  else
+    {
+      // Also age comparator digis if not running after RAW
+      ageDigis<CSCComparatorDigi>(event,m_compDigiToken,randGen,filteredCompDigis);
+      event.put(std::move(filteredCompDigis),  "MuonCSCComparatorDigi");
+    }
 
 }
 
@@ -233,8 +257,9 @@ CSCChamberMasker::ageDigis(edm::Event & event,
 		int layer = typeEff.first/10; // first digit gives layer (0 = chamber level)
 
 		bool doRandomize = false;
-		if (((std::is_same<T,CSCStripDigi>::value && type == EFF_WIRES)  || 
-		     (std::is_same<T,CSCWireDigi>::value && type  == EFF_STRIPS) || 
+		if (((std::is_same<T,CSCStripDigi>::value && type      == EFF_WIRES)  || 
+		     (std::is_same<T,CSCComparatorDigi>::value && type == EFF_STRIPS) || 
+		     (std::is_same<T,CSCWireDigi>::value && type       == EFF_STRIPS) || 
 		     type == EFF_CHAMBER) && (layer == 0 || cscDetId.layer() == layer)) doRandomize = true;
 
                   if (!doRandomize  || (randGen.flat() <= typeEff.second)) {
@@ -293,10 +318,11 @@ CSCChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("stripDigiTag",      edm::InputTag("simMuonCSCDigis:MuonCSCStripDigi"));
   desc.add<edm::InputTag>("wireDigiTag",       edm::InputTag("simMuonCSCDigis:MuonCSCWireDigi"));
-  desc.add<edm::InputTag>("comparatorDigiTag", edm::InputTag("simMuonCSCDigis:MuonCSCComparatorDigi"));
-  desc.add<edm::InputTag>("rpcDigiTag",        edm::InputTag("simMuonCSCDigis:MuonCSCRPCDigi"));
+  desc.add<edm::InputTag>("compDigiTag",       edm::InputTag("simMuonCSCDigis:MuonCSCComparatorDigi"));
+  desc.add<edm::InputTag>("comparatorDigiTag", edm::InputTag("simMuonCSCDigis:MuonCSCDigi"));
   desc.add<edm::InputTag>("alctDigiTag",       edm::InputTag("simMuonCSCDigis:MuonCSCALCTDigi"));
   desc.add<edm::InputTag>("clctDigiTag",       edm::InputTag("simMuonCSCDigis:MuonCSCCLCTDigi"));
+  desc.add<bool>("runAtRaw",                   true);
   descriptions.add("cscChamberMasker",desc);
 
 }
