@@ -319,7 +319,6 @@ CSCChamberMasker::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   desc.add<edm::InputTag>("stripDigiTag",      edm::InputTag("simMuonCSCDigis:MuonCSCStripDigi"));
   desc.add<edm::InputTag>("wireDigiTag",       edm::InputTag("simMuonCSCDigis:MuonCSCWireDigi"));
   desc.add<edm::InputTag>("compDigiTag",       edm::InputTag("simMuonCSCDigis:MuonCSCComparatorDigi"));
-  desc.add<edm::InputTag>("comparatorDigiTag", edm::InputTag("simMuonCSCDigis:MuonCSCDigi"));
   desc.add<edm::InputTag>("alctDigiTag",       edm::InputTag("simMuonCSCDigis:MuonCSCALCTDigi"));
   desc.add<edm::InputTag>("clctDigiTag",       edm::InputTag("simMuonCSCDigis:MuonCSCCLCTDigi"));
   desc.add<bool>("runAtRaw",                   true);
