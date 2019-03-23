@@ -88,6 +88,8 @@
 #include "DataFormats/GEMRecHit/interface/GEMSegmentCollection.h"
 #include "DataFormats/GEMRecHit/interface/ME0SegmentCollection.h"
 #include "DataFormats/GeometryCommonDetAlgo/interface/ErrorFrameTransformer.h"
+#include "DataFormats/DTDigi/interface/DTDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCStripDigiCollection.h"
 
 #include "SimDataFormats/TrackingHit/interface/PSimHit.h"
 #include "SimDataFormats/TrackingHit/interface/PSimHitContainer.h"
@@ -137,7 +139,11 @@ void TrackDetectorAssociator::init( const edm::EventSetup& iSetup )
    iSetup.get<GlobalTrackingGeometryRecord>().get(theTrackingGeometry_);
    if (!theTrackingGeometry_.isValid()) 
      throw cms::Exception("FatalError") << "Unable to find GlobalTrackingGeometryRecord in event!\n";
-   
+
+   // access the DT and CSC geometry
+   iSetup.get<MuonGeometryRecord>().get(theDtGeometry_);
+   iSetup.get<MuonGeometryRecord>().get(theCscGeometry_);
+
    if (useDefaultPropagator_ && (! defProp_ || theMagneticFeildWatcher_.check(iSetup) ) ) {
       // setup propagator
       edm::ESHandle<MagneticField> bField;
@@ -758,9 +764,18 @@ void TrackDetectorAssociator::fillMuon( const edm::Event& iEvent,
 
    edm::Handle<GEMSegmentCollection> gemSegments;
    if (parameters.useGEM) iEvent.getByToken(parameters.gemSegmentsToken, gemSegments );
+
    edm::Handle<ME0SegmentCollection> me0Segments;
    if (parameters.useME0) iEvent.getByToken(parameters.me0SegmentsToken, me0Segments );
-   
+
+   edm::Handle<DTDigiCollection> dtDigis;
+   edm::Handle<CSCStripDigiCollection> cscDigis;
+   if (parameters.fillDigis)
+     {
+       iEvent.getByToken(parameters.dtDigisToken,  dtDigis);
+       iEvent.getByToken(parameters.cscDigisToken, cscDigis);
+     }
+
    ///// get a set of DetId's in a given direction
    
    // check the map of available segments
@@ -782,6 +797,9 @@ void TrackDetectorAssociator::fillMuon( const edm::Event& iEvent,
    for(std::vector<TAMuonChamberMatch>::iterator matchedChamber = matchedChambers.begin(); 
        matchedChamber != matchedChambers.end(); matchedChamber++)
      {
+       int nDigisInChamb = 0;
+       int nDigisInRange = 0;
+
 	const GeomDet* geomDet = muonDetIdAssociator_->getGeomDet((*matchedChamber).id);
 	// DT chamber
 	if(const DTChamber* chamber = dynamic_cast<const DTChamber*>(geomDet) ) {
@@ -792,6 +810,29 @@ void TrackDetectorAssociator::fillMuon( const edm::Event& iEvent,
 	     if (addTAMuonSegmentMatch(*matchedChamber, &(*segment), parameters)) {
                 matchedChamber->segments.back().dtSegmentRef = DTRecSegment4DRef(dtSegments, segment - dtSegments->begin());
              }
+	     if (parameters.fillDigis) {
+
+	       double xTrack = matchedChamber->tState.localPosition().x();
+
+	       for (int sl = 1; sl < 4; sl += 2) {
+		 for (int layer = 1; layer < 5; ++layer) {
+		   const DTLayerId layerId(chamber->id(),sl,layer);
+		   
+		   auto range =  dtDigis->get(layerId);
+
+		   for (auto digiIt = range.first ;digiIt!=range.second; ++digiIt) {
+		     const auto topo = theDtGeometry_->layer(layerId)->specificTopology();
+
+		     double xWire = topo.wirePosition((*digiIt).wire());
+		     double dX = std::abs(xWire - xTrack);
+
+		     nDigisInChamb++;
+		     if (dX < parameters.digiMaxDistanceX)
+			 nDigisInRange++;
+		   }
+		 }
+	       }		
+	     }
            }
 	}
 	// CSC Chamber
@@ -804,6 +845,50 @@ void TrackDetectorAssociator::fillMuon( const edm::Event& iEvent,
                      matchedChamber->segments.back().cscSegmentRef = CSCSegmentRef(cscSegments, segment - cscSegments->begin());
                  }
               }
+	      if (parameters.fillDigis) {
+		const auto & trackPos = matchedChamber->tState.localPosition();
+
+		double xTrack = trackPos.x();
+		double yTrack = trackPos.y();
+
+		for (int iLayer = 1; iLayer < 7; ++iLayer) {
+		  const CSCDetId chId(chamber->id());
+		  const CSCDetId layerId(chId.endcap(),
+					 chId.station(),
+					 chId.ring(),
+					 chId.chamber(),
+					 iLayer);
+		  		  
+		  auto range =  cscDigis->get(layerId);
+		  
+		  for (auto digiIt = range.first ;digiIt!=range.second; ++digiIt) {
+		    
+		    std::vector<int> adcVals = digiIt->getADCCounts();
+		    bool hasFired = false;
+		    float pedestal = 0.5*(float)(adcVals[0]+adcVals[1]);
+		    float threshold = 13.3 ;
+		    float diff = 0.;
+		    for (const auto & adcVal : adcVals) {
+		      diff = (float)adcVal - pedestal;
+		      if (diff > threshold) { 
+			hasFired = true; 
+			break;
+		      }
+		    } 
+
+		    if (!hasFired) continue;
+
+		    const CSCLayerGeometry* layerGeom = theCscGeometry_->layer(layerId)->geometry();      
+		    
+		    Float_t xStrip = layerGeom->xOfStrip(digiIt->getStrip(), yTrack);
+		    float dX = std::abs(xStrip - xTrack);
+		    
+		    nDigisInChamb++;
+		    if (dX < parameters.digiMaxDistanceX)
+		      nDigisInRange++;
+		  }
+		}
+	      }	
 	}
 	else {
 	  // GEM Chamber
@@ -833,6 +918,10 @@ void TrackDetectorAssociator::fillMuon( const edm::Event& iEvent,
 	    }
 	  }
    	}
+
+	matchedChamber->nDigisInChamb = nDigisInChamb;
+	matchedChamber->nDigisInRange = nDigisInRange;
+
 	info.chambers.push_back(*matchedChamber);
      }
 }

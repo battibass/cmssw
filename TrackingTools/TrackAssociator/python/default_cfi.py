@@ -41,7 +41,11 @@ TrackAssociatorParameterBlock = cms.PSet(
 	dRPreshowerPreselection = cms.double(0.2),
         truthMatch = cms.bool(False),
         HBHERecHitCollectionLabel = cms.InputTag("hbhereco"),
-        useHcal = cms.bool(True)
+        useHcal = cms.bool(True),
+        fillDigis = cms.bool(True),
+        digiMaxDistanceX = cms.double(25.0),
+        DTDigiCollectionLabel  = cms.InputTag("muonDTDigis"),
+        CSCDigiCollectionLabel = cms.InputTag("muonCSCDigis","MuonCSCStripDigi")
     )
 )
 TrackAssociatorParameters = cms.PSet(

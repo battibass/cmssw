@@ -30,6 +30,8 @@
 #include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
 #include "DataFormats/GEMRecHit/interface/GEMSegmentCollection.h"
 #include "DataFormats/GEMRecHit/interface/ME0SegmentCollection.h"
+#include "DataFormats/DTDigi/interface/DTDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCStripDigiCollection.h"
 
 class TrackAssociatorParameters {
  public:
@@ -65,6 +67,9 @@ class TrackAssociatorParameters {
    double muonMaxDistanceY;
    double muonMaxDistanceSigmaX;
    double muonMaxDistanceSigmaY;
+
+   /// maximal distance from the propagated track to associate digis
+   double digiMaxDistanceX;
    
    bool useEcal;
    bool useHcal;
@@ -75,6 +80,7 @@ class TrackAssociatorParameters {
    bool truthMatch;
    bool useGEM;
    bool useME0;
+   bool fillDigis;
    
    /// Labels of the detector EDProducts 
    edm::InputTag theEBRecHitCollectionLabel;
@@ -86,6 +92,8 @@ class TrackAssociatorParameters {
    edm::InputTag theCSCSegmentCollectionLabel;
    edm::InputTag theGEMSegmentCollectionLabel;
    edm::InputTag theME0SegmentCollectionLabel;
+   edm::InputTag theDtDigiCollectionLabel;
+   edm::InputTag theCscDigiCollectionLabel;
 
    // Specify if we want to widen the search pass of the crossed
    // calorimeter elements taking into account uncertainty
@@ -104,6 +112,8 @@ class TrackAssociatorParameters {
    edm::EDGetTokenT<CSCSegmentCollection> cscSegmentsToken;
    edm::EDGetTokenT<GEMSegmentCollection> gemSegmentsToken;
    edm::EDGetTokenT<ME0SegmentCollection> me0SegmentsToken;
+   edm::EDGetTokenT<DTDigiCollection> dtDigisToken;
+   edm::EDGetTokenT<CSCStripDigiCollection> cscDigisToken;
    edm::EDGetTokenT<edm::SimTrackContainer> simTracksToken;
    edm::EDGetTokenT<edm::SimVertexContainer> simVerticesToken;
    edm::EDGetTokenT<edm::PCaloHitContainer> simEcalHitsEBToken;

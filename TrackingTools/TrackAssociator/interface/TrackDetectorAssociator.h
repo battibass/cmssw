@@ -27,6 +27,9 @@
 #include "DataFormats/TrackReco/interface/TrackBase.h"
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/DTGeometry/interface/DTGeometry.h"
+#include "Geometry/CSCGeometry/interface/CSCGeometry.h"
+#include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 
@@ -196,6 +199,9 @@ class TrackDetectorAssociator {
    
    edm::ESHandle<CaloGeometry> theCaloGeometry_;
    edm::ESHandle<GlobalTrackingGeometry> theTrackingGeometry_;
+
+   edm::ESHandle<DTGeometry> theDtGeometry_;
+   edm::ESHandle<CSCGeometry> theCscGeometry_;
    
    edm::ESWatcher<IdealMagneticFieldRecord>     theMagneticFeildWatcher_;
 };

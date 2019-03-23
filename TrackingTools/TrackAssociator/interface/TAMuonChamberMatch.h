@@ -29,5 +29,7 @@ class TAMuonChamberMatch {
    float localDistanceY;
    TrajectoryStateOnSurface tState;
    DetId id;
+   int nDigisInChamb;
+   int nDigisInRange;
 };
 #endif
