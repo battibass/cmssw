@@ -334,7 +334,62 @@ unsigned int Muon::stationGapMaskPull( float sigmaCut ) const
    return totMask;
 }
 
-int Muon::numberOfSegments( int station, int muonSubdetId, ArbitrationType type ) const
+int Muon::nDigisInStation( int index ) const
+{
+  int nDigis(0);
+  std::map<int, int> me11DigisPerCh;
+
+  for ( auto & match : muMatches_ )
+    {
+      if ( match.detector() != MuonSubdetId::CSC  &&
+	   match.detector() != MuonSubdetId::DT  )
+	continue;
+	  
+      int nDigisInCh = match.nDigisInRange;
+      int iStation = match.detector() == MuonSubdetId::CSC ? index - 3 : index + 1;
+
+      if( match.detector() == MuonSubdetId::CSC && iStation == 1)
+	{
+	  CSCDetId id(match.id.rawId());
+	  
+	  int station = id.station();
+	  int chamber = id.chamber();
+          int ring    = id.ring();
+	    
+	  if ( station == 1 && (ring == 1 || ring == 4) ) // merge ME1/1a and ME1/1b digis
+	    {
+	      if(me11DigisPerCh.find(chamber) == me11DigisPerCh.end())
+		me11DigisPerCh[chamber] = 0;
+	      
+	      me11DigisPerCh[chamber] += nDigisInCh;
+	      
+	      continue;
+	    }
+	}
+
+      if( iStation == match.station() && nDigisInCh > nDigis)
+	nDigis = nDigisInCh;
+    }
+
+  for (const auto & me11DigisInCh : me11DigisPerCh)
+    {  
+      int nMe11DigisInCh = me11DigisInCh.second;
+      if (nMe11DigisInCh > nDigis)
+	nDigis = nMe11DigisInCh;
+    }
+  
+  return nDigis;
+}
+
+bool Muon::hasShowerInStation( int index, int nDtDigisCut, int nCscDigisCut ) const
+{
+  bool hasShower = index < 4 ? 
+			   nDigisInStation(index) >= nDtDigisCut :
+                           nDigisInStation(index) >= nCscDigisCut;
+  return hasShower;   
+}
+
+int Muon::numberOfSegments( int station, int muonSubdetId, unsigned int type ) const
 {
    int segments(0);
    for( std::vector<MuonChamberMatch>::const_iterator chamberMatch = muMatches_.begin();
