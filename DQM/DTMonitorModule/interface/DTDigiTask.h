@@ -155,6 +155,9 @@ private:
   bool lookForSyncNoise;
   bool filterSyncNoise;
 
+  bool sliceTestMode;
+  int  tdcPedestal;
+
   bool doLayerTimeBoxes;
 
   std::map<DTChamberId, int> nSynchNoiseEvents;
