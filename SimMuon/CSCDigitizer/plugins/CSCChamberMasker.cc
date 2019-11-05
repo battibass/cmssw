@@ -208,31 +208,28 @@ void CSCChamberMasker::ageDigis(edm::Event &event,
       auto digiItr = j.second.first;
       auto last = j.second.second;
 
-      CSCDetId const cscDetId = j.first;
+      CSCDetId const cscDetId = j.first; // for a LAYER
 
-      // Since lookups are chamber-centric, make new DetId with layer=0
-      CSCDetId chId = CSCDetId(cscDetId.endcap(), cscDetId.station(), cscDetId.ring(), cscDetId.chamber(), 0);
+      auto chEffIt = m_CSCEffs.find(cscDetId); 
 
-      for (; digiItr != last; ++digiItr) {
-        auto chEffIt = m_CSCEffs.find(chId);
+      if (chEffIt != m_CSCEffs.end()) {
+	std::pair<unsigned int, float> typeEff = chEffIt->second;
+	int type = typeEff.first % 10;   // second digit gives type of inefficiency
+	int layer = typeEff.first / 10;  // first digit gives layer (0 = chamber level)
 
-        if (chEffIt != m_CSCEffs.end()) {
-          std::pair<unsigned int, float> typeEff = chEffIt->second;
-          int type = typeEff.first % 10;   // second digit gives type of inefficiency
-          int layer = typeEff.first / 10;  // first digit gives layer (0 = chamber level)
+	bool doRandomize = false;
+	if (((std::is_same<T, CSCStripDigi>::value &&      type == EFF_STRIPS) ||
+	     (std::is_same<T, CSCComparatorDigi>::value && type == EFF_STRIPS) ||
+	     (std::is_same<T, CSCWireDigi>::value &&       type == EFF_WIRES)  || 
+	     type == EFF_CHAMBER) &&
+	    (layer == 0 || cscDetId.layer() == layer))
+	  doRandomize = true;
 
-          bool doRandomize = false;
-          if (((std::is_same<T, CSCStripDigi>::value &&      type == EFF_WIRES)  ||
-               (std::is_same<T, CSCComparatorDigi>::value && type == EFF_STRIPS) ||
-	       (std::is_same<T, CSCWireDigi>::value &&       type == EFF_STRIPS) || 
-	       type == EFF_CHAMBER) &&
-              (layer == 0 || cscDetId.layer() == layer))
-            doRandomize = true;
-
-          if (!doRandomize || (randGen.flat() <= typeEff.second)) {
+	if (!doRandomize || (randGen.flat() <= typeEff.second)) {
+	  for (; digiItr != last; ++digiItr) {
             filteredDigis->insertDigi(cscDetId, *digiItr);
-          }
-        }
+	  }
+	}
       }
     }
   }

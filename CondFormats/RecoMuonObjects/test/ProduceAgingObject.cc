@@ -228,20 +228,21 @@ void
 ProduceAgingObject::createCscAgingMap(const edm::ESHandle<CSCGeometry> & cscGeom)
 {
 
-  const auto chambers = cscGeom->chambers();
+  const auto layers = cscGeom->layers();
 
-  std::cout << "[ProduceAgingObject] List of aged CSC chambers (ChamberID, efficiency, type)" 
+  std::cout << "[ProduceAgingObject] List of failed CSC layers (ID, efficiency, type)" 
 	    << std::endl;
 
-  for ( const auto *ch : chambers) {
+  for ( const auto *lay : layers) {
     
-    CSCDetId chId = ch->id();
-    
-    
-    std::string chTag = (chId.zendcap() == 1 ? "ME+" : "ME-")
-      + std::to_string(chId.station())
-      + "/" + std::to_string(chId.ring())
-      + "/" + std::to_string(chId.chamber());
+    CSCDetId cId = lay->id();
+         
+         
+    std::string chTag = (cId.zendcap() == 1 ? "ME+" : "ME-")
+      + std::to_string(cId.station())
+      + "/" + std::to_string(cId.ring())
+      + "/" + std::to_string(cId.chamber())
+      + "/" + std::to_string(cId.layer());
     
     int type = 0;
     float eff = 1.;
@@ -249,7 +250,7 @@ ProduceAgingObject::createCscAgingMap(const edm::ESHandle<CSCGeometry> & cscGeom
     for (auto & chRegExStr : m_CSCRegEx) {
       
       int loc = chRegExStr.find(":");
-      // if there's no :, then we don't have to correct format
+      // if there's no :, then we don't have correct format
       if (loc < 0) continue;
 
       std::string effTag(chRegExStr.substr(loc));
@@ -271,13 +272,13 @@ ProduceAgingObject::createCscAgingMap(const edm::ESHandle<CSCGeometry> & cscGeom
 
     } 
 
-    // Note, layer 0 for chamber specification
-    int rawId = chId.rawIdMaker(chId.endcap(), chId.station(), chId.ring(), chId.chamber(), 0);
+    int rawId = cId.rawIdMaker(cId.endcap(), cId.station(), cId.ring(), cId.chamber(), cId.layer() );
     m_CSCChambEffs[rawId] = std::make_pair(type, eff);
     
   }
 
 }
+
 void
 ProduceAgingObject::printAgingMap(const std::map<uint32_t,float> & map, 
 				  const std::string & type) const
