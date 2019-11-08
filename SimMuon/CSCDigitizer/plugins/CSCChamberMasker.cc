@@ -207,7 +207,7 @@ void CSCChamberMasker::ageDigis(edm::Event &event,
     for (const auto &j : (*digis)) {
       auto digiItr = j.second.first;
       auto last = j.second.second;
-
+    
       CSCDetId const cscDetId = j.first; // for a LAYER
 
       auto chEffIt = m_CSCEffs.find(cscDetId); 
@@ -245,11 +245,11 @@ void CSCChamberMasker::beginRun(edm::Run const &run, edm::EventSetup const &iSet
   edm::ESHandle<MuonSystemAging> agingObj;
   iSetup.get<MuonSystemAgingRcd>().get(agingObj);
 
-  const auto chambers = cscGeom->chambers();
+  const auto layers = cscGeom->layers();
 
-  for (const auto *ch : chambers) {
-    CSCDetId chId = ch->id();
-    unsigned int rawId = chId.rawIdMaker(chId.endcap(), chId.station(), chId.ring(), chId.chamber(), 0);
+  for (const auto *lay : layers) {
+    CSCDetId layId = lay->id();
+    unsigned int rawId = layId.rawIdMaker(layId.endcap(), layId.station(), layId.ring(), layId.chamber(), layId.layer());
     float eff = 1.;
     int type = 0;
     for (auto &agingPair : agingObj->m_CSCChambEffs) {
@@ -258,7 +258,7 @@ void CSCChamberMasker::beginRun(edm::Run const &run, edm::EventSetup const &iSet
 
       type = agingPair.second.first;
       eff = agingPair.second.second;
-      m_CSCEffs[chId] = std::make_pair(type, eff);
+      m_CSCEffs[layId] = std::make_pair(type, eff);
       break;
     }
   }
