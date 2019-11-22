@@ -15,21 +15,21 @@ class DTttrigWorkflow( DTWorkflow ):
         # call parent constructor
         super( DTttrigWorkflow, self ).__init__( options )
 
-        self.outpath_command_tag = "TTrigCalibration"
-        # Dict to map workflow modes to output file name
-        output_file_dict ={ "timeboxes" : "DTTimeBoxes.root",
-                            "residuals" : 'residuals.root',
-                            "validation" : "DQM.root"
-                            }
         # Dict to map workflow modes to output folders in main path
         self.outpath_workflow_mode_dict = {
                                             "timeboxes" : "TimeBoxes",
                                             "residuals" : "Residuals",
                                             "validation" : "TtrigValidation"
                                            }
+        self.outpath_command_tag = "TTrigCalibration"
+        # Dict to map workflow modes to output file name
+        output_file_dict ={ "timeboxes" : os.path.join(self.result_path, "DTTimeBoxes.root"),
+                            "residuals" : 'residuals.root',
+                            "validation" : "DQM.root"
+                            }
        # Dict to map workflow modes to database file name
         self.output_db_dict = { "timeboxes" : {
-                                          "write": "ttrig_timeboxes_uncorrected_"
+                                          "write": "ttrig_timeboxes_"
                                                     + self.tag
                                                     + ".db",
                                           "correction": "ttrig_timeboxes_"
@@ -39,6 +39,9 @@ class DTttrigWorkflow( DTWorkflow ):
                            "residuals" : "ttrig_residuals_" + self.tag + ".db"}
         self.output_file = output_file_dict[self.options.workflow_mode]
         self.output_files = [self.output_file]
+
+    def submit(self):
+        self.runCMSSWtask()
 
     def prepare_workflow(self):
         """ Generalized function to prepare workflow dependent on workflow mode"""
@@ -74,7 +77,7 @@ class DTttrigWorkflow( DTWorkflow ):
 
         if self.options.inputDBTag:
             self.add_local_custom_db()
-        self.prepare_common_submit()
+        self.prepare_common_submit(local=True)
         self.write_pset_file()
 
     def prepare_timeboxes_check(self):
@@ -84,7 +87,7 @@ class DTttrigWorkflow( DTWorkflow ):
         self.output_db_file = self.output_db_dict[self.options.workflow_mode]
         if isinstance(self.output_db_dict[self.options.workflow_mode], dict):
             self.output_db_file = self.output_db_file[self.options.command]
-        self.prepare_common_write()
+        #self.prepare_common_write()
         merged_file = os.path.join(self.result_path, self.output_file)
         ttrig_uncorrected_db = os.path.join(self.result_path,
                                             self.get_output_db("timeboxes", "write"))
@@ -138,7 +141,8 @@ class DTttrigWorkflow( DTWorkflow ):
     def prepare_timeboxes_all(self):
         # individual prepare functions for all tasks will be called in
         # main implementation of all
-        self.all_commands=["submit", "check", "write", "correction", "dump"]
+        self.all_commands=["submit", "write", "dump"]
+        #self.all_commands=["submit", "check", "write", "correction", "dump"]
 
     ####################################################################
     #                      prepare functions for residuals             #
@@ -292,6 +296,7 @@ class DTttrigWorkflow( DTWorkflow ):
             "submit",
             parents=[super(DTttrigWorkflow,cls).get_common_options_parser(),
                     super(DTttrigWorkflow,cls).get_submission_options_parser(),
+                    super(DTttrigWorkflow,cls).get_local_input_db_options_parser(),
                     super(DTttrigWorkflow,cls).get_input_db_options_parser()],
             help = "Submit job to the GRID via crab3")
 

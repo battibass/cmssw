@@ -7,8 +7,10 @@ from CondCore.CondDB.CondDB_cfi import *
 
 from RecoLocalMuon.Configuration.RecoLocalMuon_cff import *
 
-import EventFilter.DTRawToDigi.dturosunpacker_cfi
+import EventFilter.DTRawToDigi.dturosunpacker_cfi # legacy unpacker
+import EventFilter.DTRawToDigi.dtab7unpacker_cfi # phase II unpacker
 muonDTDigis = EventFilter.DTRawToDigi.dturosunpacker_cfi.dturosunpacker.clone()
+muonDTDigisPhase2 = EventFilter.DTRawToDigi.dtab7unpacker_cfi.dtAB7unpacker.clone()
 
 dtCalibOfflineReco = cms.Sequence(dt1DRecHits + dt2DSegments + dt4DSegments)
 dtCalibOfflineRecoRAW = cms.Sequence(muonDTDigis + dt1DRecHits + dt2DSegments + dt4DSegments)

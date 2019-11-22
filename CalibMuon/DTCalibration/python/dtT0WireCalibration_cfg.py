@@ -54,7 +54,11 @@ process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 # process.load("CalibMuon.DTCalibration.dt_offlineAnalysis_common_cff")
 
 import EventFilter.DTRawToDigi.dturosunpacker_cfi
+import EventFilter.DTRawToDigi.dtab7unpacker_cfi
+#process.dtunpacker = EventFilter.DTRawToDigi.dturosunpacker_cfi.dturosunpacker.clone()
+#process.dtunpacker = EventFilter.DTRawToDigi.dtab7unpacker_cfi.dtAB7unpacker.clone()
 process.dtunpacker = EventFilter.DTRawToDigi.dturosunpacker_cfi.dturosunpacker.clone()
+process.dtunpackerPhase2 = EventFilter.DTRawToDigi.dtab7unpacker_cfi.dtAB7unpacker.clone()
 
 process.PoolDBOutputService = cms.Service("PoolDBOutputService",
     process.CondDB,

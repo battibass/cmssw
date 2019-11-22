@@ -130,6 +130,25 @@ class DTWorkflow(CLIHelper, CrabHelper):
         getattr(self.process, self.digilabel).inputLabel = 'rawDataCollector'
         tools.prependPaths(self.process,self.digilabel)
 
+    def add_input_files(self):
+        run = str(self.options.run).zfill(9)
+        input_folder_central = "/eos/cms/store/data/Commissioning2019/MiniDaq/RAW/v1/"
+        run_folder = input_folder_central + "/" + run[0:3] + "/" + run[3:6] + "/" + run[6:]
+        run_folder = run_folder + "/00000"
+
+        if os.path.exists(run_folder) :
+             files = subprocess.check_output(["ls", run_folder])
+             self.process.source.fileNames = ["file://" + run_folder + "/" + f for f in files.split()]
+        else:
+             raise ValueError("Local input files not found in %s" % run_folder)
+
+    def add_phase2_unpacker(self):
+        print(self.options.workflow)
+        if self.options.workflow == "T0Wire":
+            self.process.dtunpacker = self.process.dtunpackerPhase2.clone()
+        else:
+            self.process.muonDTDigis = self.process.muonDTDigisPhase2.clone()
+
     def add_local_t0_db(self, local=False):
         """ Add a local t0 database as input. Use the option local is used
             if the pset is processed locally and not with crab.
@@ -191,15 +210,15 @@ class DTWorkflow(CLIHelper, CrabHelper):
                                     moduleName = 'customDB%s' % self.options.inputDBRcd
                                    )
 
-    def prepare_common_submit(self):
+    def prepare_common_submit(self, local=False):
         """ Common operations used in most prepare_[workflow_mode]_submit functions"""
         if not self.options.run:
             raise ValueError("Option run is required for submission!")
         if hasattr(self.options, "inputT0DB") and self.options.inputT0DB:
-            self.add_local_t0_db()
+            self.add_local_t0_db(local)
 
         if hasattr(self.options, "inputVDriftDB") and self.options.inputVDriftDB:
-            self.add_local_vdrift_db()
+            self.add_local_vdrift_db(local)
 
         if hasattr(self.options, "inputDBTag") and self.options.inputDBTag:
             self.add_local_custom_db()
@@ -208,6 +227,10 @@ class DTWorkflow(CLIHelper, CrabHelper):
             self.add_raw_option()
         if self.options.preselection:
             self.add_preselection()
+        if self.options.phase2:
+            self.add_phase2_unpacker()
+        if self.options.input_files_local:
+            self.add_input_files()
 
     def prepare_common_write(self, do_hadd=True):
         """ Common operations used in most prepare_[workflow_mode]_erite functions"""

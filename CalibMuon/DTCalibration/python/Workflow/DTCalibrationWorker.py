@@ -6,6 +6,7 @@ from .tools import loadCmsProcess
 from .DTWorkflow import DTWorkflow
 from .DTTtrigWorkflow import DTttrigWorkflow
 from .DTVdriftWorkflow import DTvdriftWorkflow
+from .DTT0WireWorkflow import DTT0WireWorkflow
 import logging
 # setup logging
 log = logging.getLogger(__name__)

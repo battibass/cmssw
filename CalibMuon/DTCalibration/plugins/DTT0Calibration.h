@@ -96,6 +96,13 @@ private:
   
   TSpectrum spectrum;
 
+  // Save hists for all wires
+  const bool histosForAllWires;
+
+  // Range for histograms
+  int t0_guess;
+  int span;
+
   //Layer with histos for each wire
   std::vector<DTWireId> wireIdWithHistos;
   std::vector<DTLayerId> layerIdWithWireHistos;

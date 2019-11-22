@@ -45,7 +45,7 @@ process.dtunpacker = cms.EDProducer("DTUnpackingModule",
 )
 
 process.dtTPAnalyzer = cms.EDAnalyzer("DTTPAnalyzer",
-    digiLabel = cms.InputTag('dtunpacker'),
+    digiLabel = cms.InputTag('muonDTDigis'),
     rootFileName = cms.untracked.string(''),
     subtractT0 = cms.bool(True),
     tTrigMode = cms.string('DTTTrigSyncT0Only'),

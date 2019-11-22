@@ -23,6 +23,8 @@ class CLIHelper(object):
             default=os.getcwd(), help="connect string default:%(default)s")
         common_opts_group.add_argument("--no-exec",
             action="store_true", help="Do not execute or submit any workflow")
+        common_opts_group.add_argument("--input-files-local",
+            action="store_true", help="Look for input files locally")
         return common_opts_parser
 
     @classmethod
@@ -85,6 +87,8 @@ class CLIHelper(object):
             help="dataset name to process")
         submission_opts_group.add_argument("--run-on-RAW", action = "store_true",
             help="Flag if run on RAW dataset")
+        submission_opts_group.add_argument("--phase2", action = "store_true",
+            help="Use phase II unpacker")
         submission_opts_group.add_argument("--fromMuons", action = "store_true",
             help="Segment selection using muon-segment matching")
         submission_opts_group.add_argument("--globaltag",
