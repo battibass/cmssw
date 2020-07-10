@@ -92,6 +92,7 @@ runType.setRunType(options.runkey.strip())
 
 if not options.inputFiles:
     # Input source
+    minEventsPerLumi = 1
     nextLumiTimeoutMillis = 240000
     endOfRunKills = True
     
