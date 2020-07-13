@@ -69,7 +69,7 @@ options.register('runWithLargeTimeBox',
                  "Runs DTDigiTask with a timebox plot window of 6400 TDC Counts")
 
 options.register('timeBoxTDCPedestal',
-                 105100, # default value
+                 100000, # default value
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.int,
                  "Pedestal to subtract to TDC counts for AB7")
