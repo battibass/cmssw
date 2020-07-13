@@ -519,7 +519,7 @@ void DTLocalTriggerBaseTask::setQLabelsPh2(MonitorElement* me, short int iaxis) 
   if (!axis)
     return;
 
-  string labels[11] = {"", "L", "L", "H", "H", "3+2", "LL", "4+2", "HL", "HH", ""};
+  string labels[11] = {"", "L only", "L multiple", "H only", "H multiple", "3+2", "LL", "4+2", "HL", "HH", ""};
   int istart = axis->GetXmin() < -1 ? 2 : 1;
   for (int i = 0; i < 11; i++) {
     axis->SetBinLabel(i + istart, labels[i].c_str());
