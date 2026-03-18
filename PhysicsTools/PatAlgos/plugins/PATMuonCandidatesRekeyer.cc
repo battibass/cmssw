@@ -23,7 +23,6 @@ namespace pat {
     // configurables
     edm::EDGetTokenT<std::vector<pat::Muon>> src_;
     edm::EDGetTokenT<reco::CandidateView> pcNewCandViewToken_;
-    edm::EDGetTokenT<pat::PackedCandidateCollection> pcNewToken_;
   };
 
 }  // namespace pat
@@ -32,9 +31,7 @@ using namespace pat;
 
 PATMuonCandidatesRekeyer::PATMuonCandidatesRekeyer(const edm::ParameterSet &iConfig)
     : src_(consumes<std::vector<pat::Muon>>(iConfig.getParameter<edm::InputTag>("src"))),
-      pcNewCandViewToken_(consumes<reco::CandidateView>(iConfig.getParameter<edm::InputTag>("packedPFCandidatesNew"))),
-      pcNewToken_(
-          consumes<pat::PackedCandidateCollection>(iConfig.getParameter<edm::InputTag>("packedPFCandidatesNew"))) {
+      pcNewCandViewToken_(consumes<reco::CandidateView>(iConfig.getParameter<edm::InputTag>("packedPFCandidatesNew"))) {
   produces<std::vector<pat::Muon>>();
 }
 
@@ -46,9 +43,6 @@ void PATMuonCandidatesRekeyer::produce(edm::Event &iEvent, edm::EventSetup const
 
   edm::Handle<reco::CandidateView> pcNewCandViewHandle;
   iEvent.getByToken(pcNewCandViewToken_, pcNewCandViewHandle);
-
-  edm::Handle<pat::PackedCandidateCollection> pcNewHandle;
-  iEvent.getByToken(pcNewToken_, pcNewHandle);
 
   auto outPtrP = std::make_unique<std::vector<pat::Muon>>();
   outPtrP->reserve(src->size());
