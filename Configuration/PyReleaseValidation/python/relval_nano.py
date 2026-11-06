@@ -507,6 +507,46 @@ steps['l1ScoutingSelectionNANO_data16.0'] = merge([{'-s': 'NANO:@L1ScoutSelect',
                                                    steps['NANO_data16.0']])
 
 ################################################################
+# Run4, 20_1_X input (for CSA28 preparation)
+# temporarily using the CMSSW_20_1_0_preX RelVal samples # CB pre3 samples do not work! 
+
+steps['TTbarToDilepton_14TeV_MINIAOD_211X'] = {'INPUT': InputInfo(location='STD', 
+    dataSet='/RelValTTbarToDilepton_14TeV/CMSSW_20_1_0_pre3-PU_150X_mcRun4_realistic_v1_STD_D121_RegeneratedGS_PU_20260903_192421_RV19-v1/MINIAODSIM')}
+
+steps['NANO_mc21.1'] = merge([{'--era': 'Phase2C22I13M9', '--conditions': 'auto:phase2_realistic_T35', '--geometry': 'ExtendedRun4D121'}, _NANO_mc])
+
+steps['BPHNANO_mc21.1'] = merge([{'-s': 'NANO:@BPH,DQM:@nanoAODDQM'},
+                                 steps['NANO_mc21.1']])
+
+steps['muPOGNANO_mc21.1'] = merge([{'-s': 'NANO:@MUPOG,DQM:@nanoAODDQM', '-n': '1000'},
+                                   steps['NANO_mc21.1']])
+
+steps['EGMNANO_mc21.1'] = merge([{'-s': 'NANO:@EGM,DQM:@nanoAODDQM', '-n': '1000'},
+                                 steps['NANO_mc21.1']])
+
+steps['BTVNANO_mc21.1'] = merge([{'-s': 'NANO:@BTV,DQM:@nanoAODDQM', '-n': '1000'},
+                                 steps['NANO_mc21.1']])
+
+steps['EXONANO_mc21.1'] = merge([{'-s': 'PAT,NANO:@EXO', '-n': '1000'},
+                                 steps['NANO_mc21.1']])
+
+steps['lepTrackInfoNANO_mc21.1'] = merge([{'-s': 'NANO:@LepTrackInfo,DQM:@nanoAODDQM', '-n': '1000'},
+                                          steps['NANO_mc21.1']])
+
+steps['jmeNANO_mc21.1'] = merge([{'-s': 'NANO:@JME,DQM:@nanojmeDQM', '-n': '1000'},
+                                 steps['NANO_mc21.1']])
+
+steps['jmeNANO_rePuppi_mc21.1'] = merge([{'-s': 'NANO:@JMErePuppi,DQM:@nanojmeDQM', '-n': '1000'},
+                                         steps['NANO_mc21.1']])
+
+steps['scoutingNANO_mc21.1'] = merge([{'-s': 'NANO:@Scout'},
+                                      steps['NANO_mc21.1']])
+
+steps['scoutingNANO_withPrompt_mc21.1'] = merge([{'-s': 'NANO:@Prompt+@Scout'},
+                                                 steps['NANO_mc21.1']])
+
+
+################################################################
 # NANOGEN
 steps['NANOGENFromGen'] = merge([{'-s': 'NANO:@GEN,DQM:@nanogenDQM',
                                   '-n': 1000,
@@ -646,6 +686,25 @@ _wfn.subnext()
 
 # DPG custom NANOs, MC
 _wfn.subnext()
+
+_wfn.next()
+######## 2500.4xxx ########
+# Run4, 20_1_X input (for CSA28 preparation)
+# temporarily using the CMSSW_20_1_0_preX RelVal samples # CB pre3 samples do not work! 
+workflows[_wfn()] = ['NANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'NANO_mc21.1', 'HRV_NANO_mc']]
+
+# POG/PAG custom NANOs, MC
+_wfn.subnext()
+workflows[_wfn()] = ['muPOGNANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'muPOGNANO_mc21.1']]
+workflows[_wfn()] = ['EGMNANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'EGMNANO_mc21.1']]
+workflows[_wfn()] = ['BTVNANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'BTVNANO_mc21.1']]
+workflows[_wfn()] = ['jmeNANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'jmeNANO_mc21.1']]
+workflows[_wfn()] = ['jmeNANOrePuppimc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'jmeNANO_rePuppi_mc21.1']]
+workflows[_wfn()] = ['lepTrackInfoNANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'lepTrackInfoNANO_mc21.1']]
+workflows[_wfn()] = ['ScoutingNANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'scoutingNANO_mc21.1']]
+workflows[_wfn()] = ['ScoutingNANOwithPromptmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'scoutingNANO_withPrompt_mc21.1']]
+workflows[_wfn()] = ['BPHNANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'BPHNANO_mc21.1']]
+workflows[_wfn()] = ['EXONANOmc211X', ['TTbarToDilepton_14TeV_MINIAOD_211X', 'EXONANO_mc21.1']]
 
 _wfn.next(9)
 ######## 2500.9xxx ########
